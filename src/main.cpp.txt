@@ -1,10 +1,12 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
+// #include <AsyncTCP.h>
+// #include <ESPAsyncTCP.h>
 #include "SPIFFS.h"
 #include <ESPAsyncWebServer.h>
 #include <ArduinoHttpClient.h>
-// #include <ElegantOTA.h>
+#include <ElegantOTA.h>
 #include <AccelStepper.h>
 #include <TimeLib.h>
 
@@ -733,8 +735,7 @@ void controlStepperMotor(void *pvParameters) {
 // this task will only be initialized if type of hife: 1 -> bees queens hive
 // ---------------------------------------------------------
 void queenHiveUpdate(void *pvParameters) {
-  // const String CONFIG_PATH_NAME[64] = "/getconfigstatusclient?mac=" + mac_address;
-  String CONFIG_PATH_NAME[64];
+  const String CONFIG_PATH_NAME[64] = "/getconfigstatusclient?mac=" + mac_address;
   WiFiClient wifi;
 
   while(true) {
