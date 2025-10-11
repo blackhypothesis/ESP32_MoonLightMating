@@ -137,7 +137,7 @@ static QueueHandle_t log_queue;
 
 String getVersion() {
   String v;
-  DynamicJsonDocument version(32);
+  JsonDocument version;
 
   if (HIVE_TYPE == 0) {
     v = VERSION + "-D";
@@ -282,7 +282,7 @@ void writeFile(fs::FS &fs, const char * path, const char * message) {
 void readWifiConfigFile() {
   String config = readFile(SPIFFS, WIFI_CONFIG_FILE);
   Serial.println(config);
-  DynamicJsonDocument cfg_json(1024);
+  JsonDocument cfg_json;
   DeserializationError error = deserializeJson(cfg_json, config.c_str());
   if (error) {
     Serial.println("Error:deserialization failed.");
@@ -308,7 +308,7 @@ void readWifiConfigFile() {
 }
 
 void writeWifiConfigFile() {
-  DynamicJsonDocument w_config(512);
+  JsonDocument w_config;
   if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {  
     w_config["ssid"] = wifi_config.ssid.c_str();
     w_config["pass"] = wifi_config.pass.c_str();
@@ -383,7 +383,7 @@ int secondsTillMotorStart(String openClose) {
 }
 
 String getConfigStatus() {
-  DynamicJsonDocument config_status(512);
+  JsonDocument config_status;
   config_status["drone_ip"] = wifi_config.ip;
   config_status["datetime"] = getDateTime();
   config_status["epochseconds"] = now();
@@ -407,7 +407,7 @@ String getConfigStatus() {
 
 String getClientStates() {
   if (xSemaphoreTake(state_client_mutex, 200) == pdTRUE) {  
-    DynamicJsonDocument client_states(1024);
+    JsonDocument client_states;
     
     for (int i = 0; i < MAX_CLIENTS; i++) {
       if (strcmp(state_client[i].ip, "0.0.0.0") == 0) {
@@ -544,7 +544,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
-    DynamicJsonDocument control_motor(64);
+    JsonDocument control_motor;
     Serial.printf("String data: %s\n", (char *)data);
     DeserializationError error = deserializeJson(control_motor, (char *)data);
     if (error) {
@@ -685,7 +685,7 @@ void controlStepperMotor(void *pvParameters) {
       if (xSemaphoreTake(run_motor_mutex, 1000) == pdTRUE) {
         ticks = xTaskGetTickCount();
 
-        DynamicJsonDocument motor_status(64);
+        JsonDocument motor_status;
         char serialized_motor_status[64];
         motor_status["motor_nr"] = mc->motor_nr;
         motor_status["direction"] = cmd.direction;
@@ -733,13 +733,12 @@ void controlStepperMotor(void *pvParameters) {
 // this task will only be initialized if type of hife: 1 -> bees queens hive
 // ---------------------------------------------------------
 void queenHiveUpdate(void *pvParameters) {
-  // const String CONFIG_PATH_NAME[64] = "/getconfigstatusclient?mac=" + mac_address;
-  String CONFIG_PATH_NAME[64];
+  const String CONFIG_PATH_NAME = "/getconfigstatusclient?mac=" + mac_address;
   WiFiClient wifi;
 
   while(true) {
     HttpClient client = HttpClient(wifi, wifi_config.ip.c_str(), 80);
-    int status = client.get(CONFIG_PATH_NAME->c_str());
+    int status = client.get(CONFIG_PATH_NAME.c_str());
     
     if (status == 0) {
       int statusCode = client.responseStatusCode();
@@ -750,16 +749,19 @@ void queenHiveUpdate(void *pvParameters) {
       Serial.print("Response: ");
       Serial.println(response);
 
-      DynamicJsonDocument config(512);
+      JsonDocument config;
 
       DeserializationError error = deserializeJson(config, response.c_str());
       if (error) {
         Serial.println("Error:deserialization failed.");
         Serial.println(error.f_str());
       }
-      JsonObject root = config.as<JsonObject>();
 
-      if (root.containsKey("epochseconds") && root.containsKey("hour_door_open") && root.containsKey("minute_door_open") && root.containsKey("hour_door_close") && root.containsKey("minute_door_close") && root.containsKey("queens_delay") && root.containsKey("config_enable")) {
+      JsonObject root = config.as<JsonObject>();
+      if (root["epochseconds"].is<JsonVariant>()
+          && root["hour_door_open"].is<JsonVariant>() && root["minute_door_open"].is<JsonVariant>()
+          && root["hour_door_close"].is<JsonVariant>() && root["minute_door_close"].is<JsonVariant>()
+          && root["queens_delay"].is<JsonVariant>() && root["config_enable"].is<JsonVariant>()) {
         if (xSemaphoreTake(schedule_motor_mutex, 10) == pdTRUE) {
           setTime(root["epochseconds"]);
           sched_motor.hour_door_open = root["hour_door_open"];
@@ -972,7 +974,7 @@ void initApp(void *pvParameters) {
   });
 
   server.on("/getdatetime", HTTP_GET, [](AsyncWebServerRequest *request){
-    DynamicJsonDocument dt(64);
+    JsonDocument dt;
     dt["datetime"] = getDateTime();
     char serialized_dt[64];
     serializeJson(dt, serialized_dt);
@@ -983,7 +985,7 @@ void initApp(void *pvParameters) {
 
   server.on("/getwificonfig", HTTP_GET, [](AsyncWebServerRequest *request){
     if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {
-      DynamicJsonDocument wc(128);
+      JsonDocument wc;
       wc["ssid"] = wifi_config.ssid;
       wc["pass"] = wifi_config.pass;
       wc["ip"] = wifi_config.ip;
@@ -1032,7 +1034,7 @@ void initApp(void *pvParameters) {
     String epochseconds;
     if (request->hasParam("epochseconds")) {
       epochseconds = request->getParam("epochseconds")->value();
-      DynamicJsonDocument dt(64);
+      JsonDocument dt;
       dt["datetime"] = getDateTime();    
       char serialized_dt[64];
       serializeJson(dt, serialized_dt);
@@ -1058,7 +1060,7 @@ void initApp(void *pvParameters) {
         sched_motor.config_enable = request->getParam("config_enable")->value().toInt();        
         xSemaphoreGive(schedule_motor_mutex);
       }
-      DynamicJsonDocument hiveconfig(256);
+      JsonDocument hiveconfig;
       hiveconfig["hour_open"] = sched_motor.hour_door_open;
       hiveconfig["minute_open"] = sched_motor.minute_door_open;
       hiveconfig["hour_close"] = sched_motor.hour_door_close;
