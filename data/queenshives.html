@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Drones: Moon Light Mating</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="style-drones.css">
+  <link rel="icon" type="image/png" href="favicon.png">
+</head>
+
+<body>
+  <div class="topnav" id="myTopnav">
+    <a href="#" class="disabled">MNM</a>
+    <div class="topnav-right">
+      <a href="drones.html">Drones</a>
+      <a href="queenshives.html">Queens</a>
+      <a href="wificonfig.html">WiFi</a>
+      <a href="alertconfig.html">Alert</a>
+    </div>
+    <a href="javascript:void(0);" class="icon" onclick="handleNavBar()">
+      <i class="fa fa-bars"></i>
+    </a>
+  </div>
+  <div class="content">
+    <div class="card-grid">
+      <div class="card">
+        <table>
+          <tbody id="client-state"></tbody>
+        </table>
+        <p><button onclick="getClientStates()">Client States</button></p>
+        <p></p>
+      </div> 
+    </div>
+  </div>
+</body>
+<script src="script_queenshive.js"></script>
+</html>        

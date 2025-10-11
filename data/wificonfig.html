@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WiFi Config</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="style-drones.css">
+  <link rel="icon" type="image/png" href="favicon.png">
+</head>
+
+<body>
+  <div class="topnav" id="myTopnav">
+    <a href="#" class="disabled">MNM</a>
+    <div class="topnav-right">
+      <a href="drones.html">Drones</a>
+      <a href="queenshives.html">Queens</a>
+      <a href="wificonfig.html">WiFi</a>
+      <a href="alertconfig.html">Alert</a>
+    </div>
+    <a href="javascript:void(0);" class="icon" onclick="handleNavBar()">
+      <i class="fa fa-bars"></i>
+    </a>
+  </div>
+  <div class="content">
+    <div class="card-grid">
+      <div class="card">
+        <form action="/" method="POST">
+            <table>
+              <tr>
+                <td><label for="ssid">SSID</label></td>
+                <td><input type="text" id ="ssid" name="ssid"></td>
+              </tr>
+              <tr>
+                <td><label for="pass">Password</label></td>
+                <td><input type="text" id ="pass" name="pass"></td>
+              </tr>
+              <tr>
+                <td><label for="ip">IP</label></td>
+                <td><input type="text" id ="ip" name="ip" value="172.23.1.222"></td>
+              </tr>
+              <tr>
+                <td><label for="gateway">Gateway</label></td>
+                <td><input type="text" id ="gateway" name="gateway" value="172.23.1.1"></td>
+              </tr>
+              <tr>
+                <td><label for="gateway">DNS</label></td>
+                <td><input type="text" id ="dns" name="dns" value="1.1.1.1"></td>
+              </tr>
+            </table>
+            <p></p>
+            <div><input type ="submit" value ="Submit"></div>
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

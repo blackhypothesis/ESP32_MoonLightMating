@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Moon Light Mating</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="icon" type="image/png" href="favicon.png">
+</head>
+
+<body>
+  <div class="topnav">
+    <div class="toptitle">Hummelsum</div>
+  </div>
+  <div class="content">
+    <div class="card-grid">
+      <div class="card">
+        <p id="datetime"><span></span></p>
+        <p><button onClick="setCurrentDateTime()">Set current time</button></p>
+        <p><button onclick="getDateTime()">Show current time</button></p>
+      </div>
+      <div class="card">
+        <p>Open door</p>
+        <table>
+          <tr>
+            <td>Scheduled time</td>
+            <td id="time_door_open"></td>
+          </tr>
+          <tr>
+            <td>Time till open</td>
+            <td id="seconds_till_door_open"></td>
+          </tr>
+        </table>
+        <p>Close door</p>
+        <table>
+          <tr>
+            <td>Scheduled time</td>
+            <td id="time_door_close"></td>
+          </tr>
+          <tr>
+            <td>Time till close</td>
+            <td id="seconds_till_door_close"></td>
+          </tr>
+        </table>
+        <p><button onclick="getConfigStatus()">Show configuration</button></p>
+      </div>
+      <div class="card">
+        <form>
+          <table>
+            <tr>
+              <td>Hour</td>
+              <td><input type="number" id="hour-door-open" name="hour-door-open" min="0" max="23" value=""></td>
+            </tr>
+            <tr>
+              <td>Minute</td>
+              <td><input type="number" id="minute-door-open" name="minute-door-open" min="0" max="59" value=""></td>
+            </tr>
+          </table>
+        </form>
+        <p><button onClick="setTimeDoorOpen()">Open door</button></p>
+      </div>
+      <div class="card">
+        <form>
+          <table>
+            <tr>
+              <td>Hour</td>
+              <td><input type="number" id="hour-door-close" name="hour-door-close" min="0" max="23" value=""></td>
+            </tr>
+            <tr>
+              <td>Minute</td>
+              <td><input type="number" id="minute-door-close" name="minute-door-close" min="0" max="59" value=""></td>
+            </tr>
+          </table>
+        </form>
+        <p><button onClick="setTimeDoorClose()">Close door</button></p>
+      </div>
+      <div class="card">
+        <form>
+          <h1>Adjust motor</h1>
+          <table>
+            <tr>
+              <td>
+                <input type="radio" id="CW" name="direction" value="1" checked>
+                <label for="CW">Clockwise</label>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <input type="radio" id="CCW" name="direction" value="-1">
+                <label for="CW">Anticlockwise</label>
+              </td>
+            </tr>
+          </table>
+          <table>
+            <tr>
+              <td><label for="steps">Steps:</label></td>
+              <td><input type="number" id="steps" name="steps"></td>
+            </tr>
+          </table>
+        </form>
+        <p><button onclick="runMotor()">START</button></p>
+        <table>
+          <tr>
+            <td>
+              <span>Motor 1</span>
+            </td>
+            <td>
+              <span id="motor-0-state">stopped</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span>Motor 2</span>
+            </td>
+            <td>
+              <span id="motor-1-state">stopped</span>
+            </td>
+          </tr>
+        </table>
+        <p></p>
+      </div>
+      <div class="card">
+        <h1>State</h1>
+        <table class="state-table">
+          <thead>
+            <tr>
+              <th>IP</th>
+              <th>MAC</th>
+              <th>#</th>
+              <th>[s]</th>
+            </tr>
+          </thead>
+          <tbody id="client-state"></tbody>
+        </table>
+        <p><button onclick="getClientStates()">Client States</button></p>
+        <p></p>
+      </div>
+      <div class="card">
+        <p><button onclick="wifiConfig()">Wifi Config</button></p>
+      </div>
+      <div class="card">
+        <p><button onclick="alertConfig()">Alert Config</button></p>
+      </div>
+    </div>
+  </div>
+</body>
+<script src="script.js"></script>
+
+</html>

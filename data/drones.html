@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Drones: Moon Light Mating</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="style-drones.css">
+  <link rel="icon" type="image/png" href="favicon.png">
+</head>
+
+<body>
+  <div class="topnav" id="myTopnav">
+    <a href="#" class="disabled">MNM</a>
+    <div class="topnav-right">
+      <a href="drones.html">Drones</a>
+      <a href="queenshives.html">Queens</a>
+      <a href="wificonfig.html">WiFi</a>
+      <a href="alertconfig.html">Alert</a>
+    </div>
+    <a href="javascript:void(0);" class="icon" onclick="handleNavBar()">
+      <i class="fa fa-bars"></i>
+    </a>
+  </div>
+  <div class="content">
+    <div class="card-grid">
+      <div class="card">
+        <p id="datetime"><span></span></p>
+        <p><button onClick="setCurrentDateTime()">Set current time</button></p>
+        <p><button onclick="getDateTime()">Show current time</button></p>
+      </div>
+      <div class="card hive-config">
+        <form>
+          <p>Open Doors</p>
+          <table>
+            <tr>
+              <td>Hour</td>
+              <td><input type="number" id="hour-door-open" name="hour-door-open" min="0" max="23" value=""></td>
+            </tr>
+            <tr>
+              <td>Minute</td>
+              <td><input type="number" id="minute-door-open" name="minute-door-open" min="0" max="59" value=""></td>
+            </tr>
+          </table>
+          <p>Close Doors</p>
+          <table>
+            <tr>
+              <td>Hour</td>
+              <td><input type="number" id="hour-door-close" name="hour-door-close" min="0" max="23" value=""></td>
+            </tr>
+            <tr>
+              <td>Minute</td>
+              <td><input type="number" id="minute-door-close" name="minute-door-close" min="0" max="59" value=""></td>
+            </tr>
+          </table>
+          <p>Queens Delay</p>
+          <table>
+            <tr>
+              <td>Seconds</td>
+              <td><input type="number" id="queens-delay" name="queens-delay" min="0" max="300" value="30"></td>
+            </tr>
+          </table>
+          <p></p>
+          <table>
+            <tr>
+              <td>
+                <label class="switch">
+                  <input type="checkbox" onchange="toggleCheckbox(this)" id="config-enable">
+                  <span class="slider"></span>
+                </label>
+              </td>
+              <td id="config-enable-text">Disabled</td>
+            </tr>
+          </table>
+        </form>
+        <p><button id="save-config" onClick="setHiveConfig()">Save Config</button></p>
+        <p id="hive-config-info"></p>
+        <table>
+          <tr>
+            <td>Time till open</td>
+            <td id="seconds_till_door_open"></td>
+          </tr>
+          <tr>
+            <td>Time till close</td>
+            <td id="seconds_till_door_close"></td>
+          </tr>
+        </table>
+        <p><button onclick="getConfigStatus()">Show Config</button></p>
+      </div>
+      <div class="card">
+        <form>
+          <p>Adjust Motor</p>
+          <table>
+            <tr>
+              <td>
+                <input type="radio" id="CW" name="direction" value="1" checked>
+                <label for="CW">Clockwise</label>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <input type="radio" id="CCW" name="direction" value="-1">
+                <label for="CW">Anticlockwise</label>
+              </td>
+            </tr>
+          </table>
+          <table>
+            <tr>
+              <td><label for="steps">Steps:</label></td>
+              <td><input type="number" id="steps" name="steps"></td>
+            </tr>
+          </table>
+        </form>
+        <p><button onclick="runMotor()">Start</button></p>
+        <table>
+          <tr>
+            <td>
+              <span>Motor 1</span>
+            </td>
+            <td>
+              <span id="motor-0-state">stopped</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <span>Motor 2</span>
+            </td>
+            <td>
+              <span id="motor-1-state">stopped</span>
+            </td>
+          </tr>
+        </table>
+        <p></p>
+      </div>
+      <div class="card">
+        <p id="version"></p>
+      </div>
+    </div>
+  </div>
+</body>
+<script src="script_drones.js"></script>
+</html>

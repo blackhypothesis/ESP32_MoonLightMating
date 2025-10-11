@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Alert Config</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="style-drones.css">
+  <link rel="icon" type="image/png" href="favicon.png">
+</head>
+
+<body>
+  <div class="topnav" id="myTopnav">
+    <a href="#" class="disabled">MNM</a>
+    <div class="topnav-right">
+      <a href="drones.html">Drones</a>
+      <a href="queenshives.html">Queens</a>
+      <a href="wificonfig.html">WiFi</a>
+      <a href="alertconfig.html">Alert</a>
+    </div>
+    <a href="javascript:void(0);" class="icon" onclick="handleNavBar()">
+      <i class="fa fa-bars"></i>
+    </a>
+  </div>
+  <div class="content">
+    <div class="card-grid">
+      <div class="card">
+        <form action="/" method="POST">
+          <p>
+            <table>
+              <tr>
+                <td><label for="token">Token</label></td>
+                <td><input type="text" id ="token" name="token"></td>
+              </tr>
+              <tr>
+                <td><label for="token">Tel Nr</label></td>
+                <td><input type="text" id ="telnr" name="telnr"></td>
+              </tr>
+            </table>
+            <p></p>
+            <div><input type ="submit" value ="Submit"></div>
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
