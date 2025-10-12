@@ -10,10 +10,12 @@
 
 #define DEBUG(...) sprintf(message, __VA_ARGS__); debug(task_name, message);
 
-const String VERSION = "0.16.0";
+const String VERSION = "0.16.2";
 
 // type of hife: 0 -> bees drones hive, 1 -> bees queens hive
-const int HIVE_TYPE = 0;
+const int HIVE_DRONES = 0;
+const int HIVE_QUEENS = 1;
+int hive_type = HIVE_DRONES;
 
 // WIFI_MODE: 0 -> WIFI_AP, 1-> WIFI_STA
 int wifi_mode = 1;
@@ -139,7 +141,7 @@ String getVersion() {
   String v;
   JsonDocument version;
 
-  if (HIVE_TYPE == 0) {
+  if (hive_type == HIVE_DRONES) {
     v = VERSION + "-D";
   } else {
     v = VERSION + "-Q";
@@ -348,7 +350,7 @@ int secondsTillMotorStart(String openClose) {
     xSemaphoreGive(schedule_motor_mutex);
   }
 
-  if (HIVE_TYPE == 1) {
+  if (hive_type == HIVE_QUEENS) {
     int h_qd, m_qd, s_qd;
     int divisor_for_minutes, divisor_for_seconds;
 
@@ -489,8 +491,8 @@ bool initWiFi() {
   localGateway.fromString(wifi_config.gateway.c_str());
   dns.fromString(wifi_config.dns.c_str());
 
-  // HIVE_TYPE: Drones -> static IP config, Queens -> dynamic IP config
-  if (HIVE_TYPE == 0) {
+  // hive_type: Drones -> static IP config, Queens -> dynamic IP config
+  if (hive_type == HIVE_DRONES) {
     if (WiFi.config(localIP, localGateway, subnet, dns, dns) == false){
       Serial.println("WiFi STA Failed to configure");
       return false;
@@ -511,7 +513,7 @@ bool initWiFi() {
       return false;
     }
   }
-  Serial.printf("MAC: %s IP: %s RSSI: %4d\n", WiFi.macAddress().c_str(), ip_addr_to_str(WiFi.localIP()).c_str(), WiFi.RSSI());
+  Serial.printf("\nMAC: %s IP: %s RSSI: %4d\n", WiFi.macAddress().c_str(), ip_addr_to_str(WiFi.localIP()).c_str(), WiFi.RSSI());
   return true;
 }
 
@@ -848,9 +850,9 @@ void initApp(void *pvParameters) {
   // ---------------------------------------------------------
   readWifiConfigFile();
 
-  // Configuration for webserver according to HIVE_TYPE
+  // Configuration for webserver according to hive_type
   // ---------------------------------------------------------
-  if (HIVE_TYPE == 0) {
+  if (hive_type == HIVE_DRONES) {
     strcpy(root_html, DRONES_HTML);
   }
   else {
@@ -867,11 +869,11 @@ void initApp(void *pvParameters) {
   if (wifi_mode == 1) {
     // try to connect to Wifi and if not successful, set wifi mode to WIFI_AP
     if (initWiFi() == false) {
-      if (HIVE_TYPE == 0) {
-        Serial.printf("%s HIVE_TYPE Drones, trying to setup WiFi AP Mode\n", getDateTime().c_str());
+      if (hive_type == HIVE_DRONES) {
+        Serial.printf("%s hive_type Drones, trying to setup WiFi AP Mode\n", getDateTime().c_str());
         initAP();
-      } else if (HIVE_TYPE == 1) {
-        Serial.printf("%s HIVE_TYPE Queens, set Wifi config to AP and restart ESP\n", getDateTime().c_str());
+      } else if (hive_type == HIVE_QUEENS) {
+        Serial.printf("%s hive_type Queens, set Wifi config to AP and restart ESP\n", getDateTime().c_str());
         setConfigWifiAP();
         writeWifiConfigFile();
         ESP.restart();
@@ -908,11 +910,11 @@ void initApp(void *pvParameters) {
   }
 
   // initialize drone hive task
-  if (HIVE_TYPE == 0) {
+  if (hive_type == HIVE_DRONES) {
     xTaskCreate(sendWifiConfigToClients, "Send Wifi config", 4096, NULL, 2, NULL);
   }
   // initialize queen hive update task
-  if (HIVE_TYPE == 1) {
+  if (hive_type == HIVE_QUEENS) {
     xTaskCreate(queenHiveUpdate, "Queen Hive Update", 4096, NULL, 2, NULL);
   }
 
@@ -957,7 +959,7 @@ void initApp(void *pvParameters) {
     writeWifiConfigFile();
 
     // set wifi_config_sent to 0 in order that the current wifi_config will be sent to all clients again
-    if (HIVE_TYPE == 0) {
+    if (hive_type == HIVE_DRONES) {
       for (int i = 0; i < MAX_CLIENTS; i++) {
       state_client[i].wifi_config_sent = 0;
       }
@@ -1136,10 +1138,10 @@ void initApp(void *pvParameters) {
 
         Serial.printf("%s WiFi mode: WIFI_STA\n", getDateTime().c_str());
         if (initWiFi() == false) {
-          if (HIVE_TYPE == 0) {
+          if (hive_type == HIVE_DRONES) {
             initAP();
             strcpy(root_html, WIFI_CONFIG_HTML);
-          } else if (HIVE_TYPE == 1) {
+          } else if (hive_type == HIVE_QUEENS) {
             setConfigWifiAP();
             writeWifiConfigFile();
           }
