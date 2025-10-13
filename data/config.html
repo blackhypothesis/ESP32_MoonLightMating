@@ -13,7 +13,7 @@
     <div class="topnav-right">
       <a href="drones.html">Drones</a>
       <a href="queenshives.html">Queens</a>
-      <a href="wificonfig.html">WiFi</a>
+      <a href="config.html">Config</a>
       <a href="alertconfig.html">Alert</a>
     </div>
     <a href="javascript:void(0);" class="icon" onclick="handleNavBar()">
@@ -26,6 +26,16 @@
         <form action="/" method="POST">
             <table>
               <tr>
+                <td><label for="hivetype">Hive Type</label></td>
+                <td><input type="text" id ="hivetype" name="hivetype"></td>
+              </tr>
+              <tr>
+                <td><label for="wifimode">WiFi Mode</label></td>
+                <td><input type="text" id ="wifimode" name="wifimode"></td>
+              </tr>
+            </table>
+            <table>
+              <tr>
                 <td><label for="ssid">SSID</label></td>
                 <td><input type="text" id ="ssid" name="ssid"></td>
               </tr>
@@ -35,15 +45,15 @@
               </tr>
               <tr>
                 <td><label for="ip">IP</label></td>
-                <td><input type="text" id ="ip" name="ip" value="172.23.1.222"></td>
+                <td><input type="text" id ="ip" name="ip" value=""></td>
               </tr>
               <tr>
                 <td><label for="gateway">Gateway</label></td>
-                <td><input type="text" id ="gateway" name="gateway" value="172.23.1.1"></td>
+                <td><input type="text" id ="gateway" name="gateway" value=""></td>
               </tr>
               <tr>
-                <td><label for="gateway">DNS</label></td>
-                <td><input type="text" id ="dns" name="dns" value="1.1.1.1"></td>
+                <td><label for="dns">DNS</label></td>
+                <td><input type="text" id ="dns" name="dns" value=""></td>
               </tr>
             </table>
             <p></p>
@@ -54,4 +64,5 @@
     </div>
   </div>
 </body>
+<script src="script_config.js"></script>
 </html>

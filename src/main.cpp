@@ -10,22 +10,33 @@
 
 #define DEBUG(...) sprintf(message, __VA_ARGS__); debug(task_name, message);
 
-const String VERSION = "0.16.2";
+const String VERSION = "0.17.5";
 
 // type of hife: 0 -> bees drones hive, 1 -> bees queens hive
 const int HIVE_DRONES = 0;
 const int HIVE_QUEENS = 1;
-int hive_type = HIVE_DRONES;
 
-// WIFI_MODE: 0 -> WIFI_AP, 1-> WIFI_STA
-int wifi_mode = 1;
-const int WIFI_MODE_GPIO = 13;
+const int MODE_WIFI_STA = 1;
+const int MODE_WIFI_AP = 2;
+
+const char* HIVE_DEFAULT_CONFIG_FILE = "/hiveconfig_default.json";
+const char* HIVE_CONFIG_FILE = "/hiveconfig.json";
+
+// const int WIFI_MODE_GPIO = 13;
+const char* WIFI_DEFAULT_CONFIG_FILE = "/wificonfig_default.json";
 const char* WIFI_CONFIG_FILE = "/wificonfig.json";
 
 char root_html[16];
 const char* DRONES_HTML = "/drones.html";
 const char* QUEENS_HTML = "/queens.html";
-const char* WIFI_CONFIG_HTML = "/wificonfig.html";
+const char* WIFI_CONFIG_HTML = "/config.html";
+
+typedef struct hive_cfg {
+  int hive_type;
+  int wifi_mode;
+} hive_cfg_t;
+
+hive_cfg_t hive_config;
 
 typedef struct wifi_cfg {
   String ssid;
@@ -36,10 +47,6 @@ typedef struct wifi_cfg {
 } wifi_cfg_t;
 
 wifi_cfg_t wifi_config;
-IPAddress localIP;
-IPAddress localGateway;
-IPAddress subnet(255, 255, 255, 0);
-IPAddress dns;
 
 String mac_address = "00:00:00:00:00:00";
 
@@ -127,6 +134,7 @@ static schedule_motor_t sched_motor = {0, 0, 0, 0, 0, 0};
 // mutex
 static SemaphoreHandle_t run_motor_mutex;
 static SemaphoreHandle_t setdatetime_mutex;
+static SemaphoreHandle_t hive_config_mutex;
 static SemaphoreHandle_t wifi_config_mutex;
 static SemaphoreHandle_t state_client_mutex;
 static SemaphoreHandle_t last_action_mutex;
@@ -141,7 +149,7 @@ String getVersion() {
   String v;
   JsonDocument version;
 
-  if (hive_type == HIVE_DRONES) {
+  if (hive_config.hive_type == HIVE_DRONES) {
     v = VERSION + "-D";
   } else {
     v = VERSION + "-Q";
@@ -281,13 +289,58 @@ void writeFile(fs::FS &fs, const char * path, const char * message) {
   }
 }
 
+void restoreDefaultConfigs() {
+  String wifi_config = readFile(SPIFFS, WIFI_DEFAULT_CONFIG_FILE);
+  writeFile(SPIFFS, WIFI_CONFIG_FILE, wifi_config.c_str());
+  String hive_config = readFile(SPIFFS, HIVE_DEFAULT_CONFIG_FILE);
+  writeFile(SPIFFS, HIVE_CONFIG_FILE, hive_config.c_str());
+}
+
+void readHiveConfigFile() {
+  String config = readFile(SPIFFS, HIVE_CONFIG_FILE);
+  Serial.println(config);
+  JsonDocument cfg_json;
+  DeserializationError error = deserializeJson(cfg_json, config.c_str());
+  if (error) {
+    Serial.println("Error: deserialization failed.");
+    Serial.println(error.f_str());
+  }
+  JsonObject documentRoot = cfg_json.as<JsonObject>();
+  int hive_type = documentRoot["hive_type"];
+  int wifi_mode = documentRoot["wifi_mode"];
+  if (xSemaphoreTake(hive_config_mutex, 200) == pdTRUE) {
+    hive_config.hive_type = hive_type;
+    hive_config.wifi_mode = wifi_mode;
+    xSemaphoreGive(hive_config_mutex);
+    Serial.printf("%s read Hive config from file.\n", getDateTime().c_str());
+  } else {
+    Serial.printf("%s cannot read Hive cnfig file: mutex locked.\n", getDateTime().c_str());
+  }
+}
+
+void writeHiveConfigFile() {
+  JsonDocument h_config;
+  if (xSemaphoreTake(hive_config_mutex, 200) == pdTRUE) {
+    h_config["hive_type"] = hive_config.hive_type;
+    h_config["wifi_mode"] = hive_config.wifi_mode;
+    xSemaphoreGive(hive_config_mutex);
+    Serial.printf("%s wrote Hive cnfig to file.\n", getDateTime().c_str());
+  } else {
+    Serial.printf("%s cannot write Hive cnfig file: mutex locked.\n", getDateTime().c_str());
+  }
+  char serialized_h_config[512];
+  serializeJson(h_config, serialized_h_config);
+  Serial.printf("Save Hive config: %s\n", serialized_h_config);
+  writeFile(SPIFFS, HIVE_CONFIG_FILE, serialized_h_config);
+}
+
 void readWifiConfigFile() {
   String config = readFile(SPIFFS, WIFI_CONFIG_FILE);
   Serial.println(config);
   JsonDocument cfg_json;
   DeserializationError error = deserializeJson(cfg_json, config.c_str());
   if (error) {
-    Serial.println("Error:deserialization failed.");
+    Serial.println("Error: deserialization failed.");
     Serial.println(error.f_str());
   }
   JsonObject documentRoot = cfg_json.as<JsonObject>();
@@ -350,7 +403,7 @@ int secondsTillMotorStart(String openClose) {
     xSemaphoreGive(schedule_motor_mutex);
   }
 
-  if (hive_type == HIVE_QUEENS) {
+  if (hive_config.hive_type == HIVE_QUEENS) {
     int h_qd, m_qd, s_qd;
     int divisor_for_minutes, divisor_for_seconds;
 
@@ -405,6 +458,27 @@ String getConfigStatus() {
   serializeJson(config_status, serialized_config_status);
 
   return String(serialized_config_status);
+}
+
+String getHiveConfig() {
+  JsonDocument hive_c;
+  hive_c["hive_type"] = hive_config.hive_type;
+  hive_c["wifi_mode"] = hive_config.wifi_mode;
+  char serialized_hive_c[128];
+  serializeJson(hive_c, serialized_hive_c);
+  return String(serialized_hive_c);
+}
+
+String getWifiConfig() {
+  JsonDocument wifi_c;
+  wifi_c["ssid"] = wifi_config.ssid;
+  wifi_c["pass"] = wifi_config.pass;
+  wifi_c["ip"] = wifi_config.ip;
+  wifi_c["gateway"] = wifi_config.gateway;
+  wifi_c["ssid"] = wifi_config.dns;
+  char serialized_wifi_c[128];
+  serializeJson(wifi_c, serialized_wifi_c);
+  return String(serialized_wifi_c);
 }
 
 String getClientStates() {
@@ -463,23 +537,15 @@ void scanWiFi() {
 // ---------------------------------------------------------
 // WiFi
 // ---------------------------------------------------------
-void setConfigWifiAP() {
-  if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {  
-    wifi_config.ssid = String("HIVE-ACCESS-POINT");
-    wifi_config.pass = String("12345678");
-    wifi_config.ip = String("192.168.4.1");
-    wifi_config.gateway = String("192.168.4.1");
-    wifi_config.dns = String("1.1.1.1");
-    xSemaphoreGive(wifi_config_mutex);
-    Serial.printf("%s set WiFi config to AP.\n", getDateTime().c_str());
-  } else {
-    Serial.printf("%s cannot set WiFi config to AP: mutex locked.\n", getDateTime().c_str());
-  }
-}
 
 bool initWiFi() {
   unsigned long previousMillis = 0;
   const long interval = 10000;
+
+  IPAddress localIP;
+  IPAddress localGateway;
+  IPAddress subnet(255, 255, 255, 0);
+  IPAddress dns;
 
   if(wifi_config.ssid=="" || wifi_config.ip==""){
     Serial.println("Undefined SSID or IP address.");
@@ -492,7 +558,7 @@ bool initWiFi() {
   dns.fromString(wifi_config.dns.c_str());
 
   // hive_type: Drones -> static IP config, Queens -> dynamic IP config
-  if (hive_type == HIVE_DRONES) {
+  if (hive_config.hive_type == HIVE_DRONES) {
     if (WiFi.config(localIP, localGateway, subnet, dns, dns) == false){
       Serial.println("WiFi STA Failed to configure");
       return false;
@@ -518,16 +584,39 @@ bool initWiFi() {
 }
 
 // Initialize Access Point
-void initAP() {
-  setConfigWifiAP();
+bool initAP() {
+  IPAddress localIP;
+  IPAddress localGateway;
+  IPAddress subnet(255, 255, 255, 0);
+  IPAddress dns;
+
+  if(wifi_config.ssid=="" || wifi_config.ip==""){
+    Serial.println("Undefined SSID or IP address.");
+    return false;
+  }
+
   WiFi.mode(WIFI_AP);
+  localIP.fromString(wifi_config.ip.c_str());
+  localGateway.fromString(wifi_config.gateway.c_str());
+  dns.fromString(wifi_config.dns.c_str());
   Serial.println("Set WiFi mode to AP.");
+
   WiFi.softAP(wifi_config.ssid.c_str(), wifi_config.pass.c_str());
-  Serial.print("GW IP: ");
-  Serial.println(WiFi.gatewayIP());
-  IPAddress IP = WiFi.softAPIP();
+  vTaskDelay(500 / portTICK_PERIOD_MS);
+  if (WiFi.softAPConfig(localIP, localGateway, subnet) == false) {
+    Serial.println("WiFi AP Failed to configure");
+    return false;
+  }
+
+  Serial.print("Soft AP SSID:  ");
+  Serial.println(WiFi.softAPSSID());
   Serial.print("AP IP address: ");
-  Serial.println(IP);
+  Serial.println(WiFi.softAPIP());
+  Serial.print("GW IP:         ");
+  Serial.println(WiFi.gatewayIP());
+  Serial.print("Subnet Mask:   ");
+  Serial.println(WiFi.subnetMask());
+  return true;
 }
 
 // ---------------------------------------------------------
@@ -832,6 +921,7 @@ void initApp(void *pvParameters) {
   // create mutexes
   run_motor_mutex = xSemaphoreCreateMutex();
   setdatetime_mutex = xSemaphoreCreateMutex();
+  hive_config_mutex = xSemaphoreCreateMutex();
   wifi_config_mutex = xSemaphoreCreateMutex();
   state_client_mutex = xSemaphoreCreateMutex();
   last_action_mutex = xSemaphoreCreateMutex();
@@ -841,45 +931,49 @@ void initApp(void *pvParameters) {
   Serial.begin(115200);
   vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-  Serial.printf("%s Version %s\n", getDateTime().c_str(), getVersion().c_str());
-
   // Filesystem: init
   // ---------------------------------------------------------
   initFS();
-  // read config from CONFIG_FILE
+
+  // read Hive / WiFi configs
   // ---------------------------------------------------------
   readWifiConfigFile();
+  readHiveConfigFile();
+
+  Serial.printf("%s Version %s\n", getDateTime().c_str(), getVersion().c_str());
 
   // Configuration for webserver according to hive_type
   // ---------------------------------------------------------
-  if (hive_type == HIVE_DRONES) {
+  if (hive_config.hive_type == HIVE_DRONES) {
     strcpy(root_html, DRONES_HTML);
   }
   else {
     strcpy(root_html, QUEENS_HTML);
   }
-  
+
+
   // WiFi: init
   // ---------------------------------------------------------
-  pinMode(WIFI_MODE_GPIO, INPUT);
-  wifi_mode = 1; // digitalRead(WIFI_MODE_GPIO);
-
   Serial.printf("%s Init WiFi\n", getDateTime().c_str());
   
-  if (wifi_mode == 1) {
+  Serial.printf("%s hive_config.hive_type = %d\n", getDateTime().c_str(), hive_config.hive_type);
+  Serial.printf("%s hive_config.wifi_mode = %d\n", getDateTime().c_str(), hive_config.wifi_mode);
+  if (hive_config.wifi_mode == MODE_WIFI_STA) {
+    Serial.printf("%s WiFi Mode: Station.\n", getDateTime().c_str());
     // try to connect to Wifi and if not successful, set wifi mode to WIFI_AP
     if (initWiFi() == false) {
-      if (hive_type == HIVE_DRONES) {
+      Serial.printf("%s Unable to connect to SSID %s.\n", getDateTime().c_str(), wifi_config.ssid);
+      if (hive_config.hive_type == HIVE_DRONES) {
         Serial.printf("%s hive_type Drones, trying to setup WiFi AP Mode\n", getDateTime().c_str());
         initAP();
-      } else if (hive_type == HIVE_QUEENS) {
+      } else if (hive_config.hive_type == HIVE_QUEENS) {
         Serial.printf("%s hive_type Queens, set Wifi config to AP and restart ESP\n", getDateTime().c_str());
-        setConfigWifiAP();
-        writeWifiConfigFile();
+        restoreDefaultConfigs;
         ESP.restart();
       }
     }
   } else {
+    Serial.printf("%s WiFi Mode: AP.\n", getDateTime().c_str());
     initAP();
   }
 
@@ -910,11 +1004,11 @@ void initApp(void *pvParameters) {
   }
 
   // initialize drone hive task
-  if (hive_type == HIVE_DRONES) {
+  if (hive_config.hive_type == HIVE_DRONES) {
     xTaskCreate(sendWifiConfigToClients, "Send Wifi config", 4096, NULL, 2, NULL);
   }
   // initialize queen hive update task
-  if (hive_type == HIVE_QUEENS) {
+  if (hive_config.hive_type == HIVE_QUEENS) {
     xTaskCreate(queenHiveUpdate, "Queen Hive Update", 4096, NULL, 2, NULL);
   }
 
@@ -933,6 +1027,12 @@ void initApp(void *pvParameters) {
       const AsyncWebParameter* p = request->getParam(i);
       if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {
         if(p->isPost()){
+          if (p->name() == "hivetype") {
+            hive_config.hive_type = p->value().toInt();
+          }
+          if (p->name() == "wifimode") {
+            hive_config.wifi_mode = p->value().toInt();
+          }
           if (p->name() == "ssid") {
             wifi_config.ssid = p->value().c_str();
           }
@@ -957,14 +1057,16 @@ void initApp(void *pvParameters) {
       Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
     }
     writeWifiConfigFile();
+    writeHiveConfigFile();
 
     // set wifi_config_sent to 0 in order that the current wifi_config will be sent to all clients again
-    if (hive_type == HIVE_DRONES) {
+    if (hive_config.hive_type == HIVE_DRONES) {
       for (int i = 0; i < MAX_CLIENTS; i++) {
       state_client[i].wifi_config_sent = 0;
       }
     }
-    request->send(200, "text/plain", "Done. Restart ESP to connect with the WiFi settings and go to IP address: " + wifi_config.ip);
+    request->send(200, "text/plain", "Done. ESP will be restarted to connect with the WiFi settings. New IP address: " + wifi_config.ip);
+    ESP.restart();
   });
 
 
@@ -985,6 +1087,22 @@ void initApp(void *pvParameters) {
     set_last_action_to_now();
   });
 
+  server.on("/gethiveconfig", HTTP_GET, [](AsyncWebServerRequest *request){
+    if (xSemaphoreTake(hive_config_mutex, 200) == pdTRUE) {
+      JsonDocument hc;
+      hc["hivetype"] = hive_config.hive_type;
+      hc["wifimode"] = hive_config.wifi_mode;
+      char serialized_hc[128];
+      serializeJson(hc, serialized_hc);
+      request-> send(200, "application/json", String(serialized_hc));
+      set_last_action_to_now();
+      xSemaphoreGive(hive_config_mutex);
+      Serial.printf("%s /gethiveconfig %s\n", getDateTime().c_str(), serialized_hc);
+    } else {
+      Serial.printf("%s /gethiveconfig, cant't get config: mutex locked.\n", getDateTime().c_str());
+    }
+  });
+
   server.on("/getwificonfig", HTTP_GET, [](AsyncWebServerRequest *request){
     if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {
       JsonDocument wc;
@@ -1002,7 +1120,7 @@ void initApp(void *pvParameters) {
     } else {
       Serial.printf("%s /getwificonfig, cant't get config: mutex locked.\n", getDateTime().c_str());
     }
-  });  
+  });
 
   server.on("/getconfigstatus", HTTP_GET, [](AsyncWebServerRequest *request){
     IPAddress client_ip = request->client()->remoteIP();
@@ -1032,7 +1150,7 @@ void initApp(void *pvParameters) {
     set_last_action_to_now();
   });
 
-    server.on("/setdatetime", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("/setdatetime", HTTP_GET, [](AsyncWebServerRequest *request){
     String epochseconds;
     if (request->hasParam("epochseconds")) {
       epochseconds = request->getParam("epochseconds")->value();
@@ -1051,7 +1169,7 @@ void initApp(void *pvParameters) {
     }
   });
 
-  server.on("/sethiveconfig", HTTP_GET, [](AsyncWebServerRequest *request) {
+  server.on("/setscheduleconfig", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (request->hasParam("hour_open") && request->hasParam("minute_open") && request->hasParam("hour_close") && request->hasParam("minute_close") && request->hasParam("queens_delay") && request->hasParam("config_enable")) {
       if(xSemaphoreTake(schedule_motor_mutex, 300 / portTICK_PERIOD_MS) == pdTRUE) {
         sched_motor.hour_door_open = request->getParam("hour_open")->value().toInt();
@@ -1071,7 +1189,7 @@ void initApp(void *pvParameters) {
       hiveconfig["config_enable"] = sched_motor.config_enable;
       char serialized_hiveconfig[256];
       serializeJson(hiveconfig, serialized_hiveconfig);
-      Serial.printf("%s sethiveconfig %s\n", getDateTime().c_str(), serialized_hiveconfig);
+      Serial.printf("%s setscheduleconfig %s\n", getDateTime().c_str(), serialized_hiveconfig);
       request->send(200, "application/json", String(serialized_hiveconfig));
       set_last_action_to_now();
     }
@@ -1138,14 +1256,12 @@ void initApp(void *pvParameters) {
 
         Serial.printf("%s WiFi mode: WIFI_STA\n", getDateTime().c_str());
         if (initWiFi() == false) {
-          if (hive_type == HIVE_DRONES) {
+          // TODO: clear handling
+          if (hive_config.hive_type == HIVE_DRONES) {
             initAP();
             strcpy(root_html, WIFI_CONFIG_HTML);
-          } else if (hive_type == HIVE_QUEENS) {
-            setConfigWifiAP();
-            writeWifiConfigFile();
           }
-        };
+        }
       }
       set_last_action_to_now();
     }

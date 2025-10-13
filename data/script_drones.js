@@ -36,7 +36,7 @@ function onMessage(event) {
     var msg = JSON.parse(event.data);
     direction = msg["direction"];
     var motor_element = "motor-" + msg["motor_nr"] + "-state";
-    if (direction == 0){ 
+    if (direction == 0){
       document.getElementById(motor_element).innerHTML = "Motor stopped."
       document.getElementById(motor_element).style.color = "red";
     }
@@ -212,7 +212,7 @@ function toggleCheckbox(element) {
     }
 }
 
-function setHiveConfig() {
+function setScheduleConfig() {
     var valid_params = true;
     var hour_open = document.getElementById("hour-door-open").value;
     var minute_open = document.getElementById("minute-door-open").value;
@@ -258,7 +258,7 @@ function setHiveConfig() {
 
     if (valid_params == true) {
         var xhr = new XMLHttpRequest();
-        xhr.open("GET", "/sethiveconfig?hour_open=" + hour_open + "&minute_open=" + minute_open + "&hour_close=" + hour_close + "&minute_close=" + minute_close + "&queens_delay=" + queens_delay + "&config_enable=" + config_enable);
+        xhr.open("GET", "/setscheduleconfig?hour_open=" + hour_open + "&minute_open=" + minute_open + "&hour_close=" + hour_close + "&minute_close=" + minute_close + "&queens_delay=" + queens_delay + "&config_enable=" + config_enable);
         xhr.send();
         console.log("hour_open: " + hour_open + " minute_open: " + minute_open + " hour_close: " + hour_close + " minute_close: " + minute_close + " queens_delay: " + queens_delay + " config_enable: " + config_enable);
         document.getElementById("hive-config-info").innerHTML = "Config updated";
