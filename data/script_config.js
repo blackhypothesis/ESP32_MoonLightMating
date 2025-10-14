@@ -3,7 +3,7 @@ getWifiConfig()
 
 function getHiveConfig() {
     var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
+    xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             var msg = JSON.parse(this.responseText);
             console.log(msg);
@@ -39,7 +39,7 @@ function getHiveConfig() {
 
 function getWifiConfig() {
     var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
+    xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             var msg = JSON.parse(this.responseText);
             console.log(msg);
@@ -82,4 +82,24 @@ function toggleWifiMode(element) {
         document.getElementById("wifimode").value = 1;
         console.log("WiFiMode STA");
     }
+}
+
+function resetDefaultConfig() {
+    ok = ays();
+    if (ok == true) {
+        console.log("Reset to default config.")
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "/resetdefaultconfig");
+        xhr.send();
+    }
+}
+
+function ays() {
+    var answer;
+    if (confirm("Are you sure?") == true) {
+        answer = true;
+    } else {
+        answer = false;
+    }
+    return answer;
 }

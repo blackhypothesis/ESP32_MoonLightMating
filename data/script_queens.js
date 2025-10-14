@@ -35,11 +35,11 @@ function onMessage(event) {
     var msg = JSON.parse(event.data);
     direction = msg["direction"];
     var motor_element = "motor-" + msg["motor_nr"] + "-state";
-    if (direction == 0){ 
-      document.getElementById(motor_element).innerHTML = "Motor stopped."
-      document.getElementById(motor_element).style.color = "red";
+    if (direction == 0) {
+        document.getElementById(motor_element).innerHTML = "Motor stopped."
+        document.getElementById(motor_element).style.color = "red";
     }
-    else if(direction == 1) {
+    else if (direction == 1) {
         document.getElementById(motor_element).innerHTML = "Clockwise.";
         document.getElementById(motor_element).style.color = "green";
     }
@@ -60,7 +60,7 @@ function handleNavBar() {
     }
 }
 
-function runMotor(){
+function runMotor() {
     const rbs = document.querySelectorAll('input[name="direction"]');
     direction;
     for (const rb of rbs) {
@@ -69,15 +69,14 @@ function runMotor(){
             break;
         }
     }
-    
+
     var steps = document.getElementById("steps").value;
     var msg = '{"steps":' + steps + ',"direction":' + direction + '}';
     console.log(msg);
     websocket.send(msg);
 }
 
-function secondsToHMS(secs)
-{
+function secondsToHMS(secs) {
     var hours = Math.floor(secs / (60 * 60));
 
     var divisor_for_minutes = secs % (60 * 60);
@@ -95,7 +94,7 @@ function secondsToHMS(secs)
 
 function getVersion() {
     var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
+    xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             var msg = JSON.parse(this.responseText);
             console.log(msg);
@@ -108,7 +107,7 @@ function getVersion() {
 
 function getConfigStatus() {
     var xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
+    xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             var msg = JSON.parse(this.responseText);
             console.log(msg);
@@ -138,7 +137,7 @@ function getConfigStatus() {
                 document.getElementById("config-enable-text").style.backgroundColor = "red";
 
             }
-            
+
             (hdo < 10) ? hdo = "0" + hdo : hdo;
             (mdo < 10) ? mdo = "0" + mdo : mdo;
             (hdc < 10) ? hdc = "0" + hdc : hdc;

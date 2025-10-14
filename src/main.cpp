@@ -10,7 +10,7 @@
 
 #define DEBUG(...) sprintf(message, __VA_ARGS__); debug(task_name, message);
 
-const String VERSION = "0.17.7";
+const String VERSION = "0.17.10";
 
 // type of hife: 0 -> bees drones hive, 1 -> bees queens hive
 const int HIVE_DRONES = 0;
@@ -289,7 +289,7 @@ void writeFile(fs::FS &fs, const char * path, const char * message) {
   }
 }
 
-void restoreDefaultConfigs() {
+void resetDefaultConfigs() {
   String wifi_config = readFile(SPIFFS, WIFI_DEFAULT_CONFIG_FILE);
   writeFile(SPIFFS, WIFI_CONFIG_FILE, wifi_config.c_str());
   String hive_config = readFile(SPIFFS, HIVE_DEFAULT_CONFIG_FILE);
@@ -1112,6 +1112,12 @@ void initApp(void *pvParameters) {
     } else {
       Serial.printf("%s /getwificonfig, cant't get config: mutex locked.\n", getDateTime().c_str());
     }
+  });
+
+  server.on("/resetdefaultconfig", HTTP_GET, [](AsyncWebServerRequest *request){
+    Serial.printf("%s /resetdefaultconfig %s\n", getDateTime().c_str());
+    resetDefaultConfigs();
+    ESP.restart();
   });
 
   server.on("/getconfigstatus", HTTP_GET, [](AsyncWebServerRequest *request){
