@@ -10,7 +10,7 @@
 
 #define DEBUG(...) sprintf(message, __VA_ARGS__); debug(task_name, message);
 
-const String VERSION = "0.17.5";
+const String VERSION = "0.17.7";
 
 // type of hife: 0 -> bees drones hive, 1 -> bees queens hive
 const int HIVE_DRONES = 0;
@@ -959,18 +959,10 @@ void initApp(void *pvParameters) {
   Serial.printf("%s hive_config.hive_type = %d\n", getDateTime().c_str(), hive_config.hive_type);
   Serial.printf("%s hive_config.wifi_mode = %d\n", getDateTime().c_str(), hive_config.wifi_mode);
   if (hive_config.wifi_mode == MODE_WIFI_STA) {
-    Serial.printf("%s WiFi Mode: Station.\n", getDateTime().c_str());
-    // try to connect to Wifi and if not successful, set wifi mode to WIFI_AP
+    Serial.printf("%s WiFi Mode: STA.\n", getDateTime().c_str());
     if (initWiFi() == false) {
       Serial.printf("%s Unable to connect to SSID %s.\n", getDateTime().c_str(), wifi_config.ssid);
-      if (hive_config.hive_type == HIVE_DRONES) {
-        Serial.printf("%s hive_type Drones, trying to setup WiFi AP Mode\n", getDateTime().c_str());
-        initAP();
-      } else if (hive_config.hive_type == HIVE_QUEENS) {
-        Serial.printf("%s hive_type Queens, set Wifi config to AP and restart ESP\n", getDateTime().c_str());
-        restoreDefaultConfigs;
-        ESP.restart();
-      }
+      ESP.restart();
     }
   } else {
     Serial.printf("%s WiFi Mode: AP.\n", getDateTime().c_str());
