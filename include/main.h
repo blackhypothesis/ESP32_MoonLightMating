@@ -8,7 +8,7 @@
 #include <AccelStepper.h>
 #include <TimeLib.h>
 
-const String VERSION = "0.17.10";
+const String VERSION = "0.17.16";
 
 // type of hife: 0 -> bees drones hive, 1 -> bees queens hive
 const int HIVE_DRONES = 0;

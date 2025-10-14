@@ -488,6 +488,7 @@ String readFile(fs::FS &fs, const char * path) {
     fileContent = file.readStringUntil('\n');
     break;
   }
+  file.close();
   return fileContent;
 }
 
@@ -505,6 +506,7 @@ void writeFile(fs::FS &fs, const char * path, const char * message) {
   } else {
     Serial.println("- write failed");
   }
+  file.close();
 }
 
 void resetDefaultConfigs() {
@@ -1045,16 +1047,14 @@ void queenHiveUpdate(void *pvParameters) {
       int statusCode = client.responseStatusCode();
       String response = client.responseBody();
 
-      Serial.print("Status code: ");
-      Serial.println(statusCode);
-      Serial.print("Response: ");
-      Serial.println(response);
+      Serial.printf("%s queenHiveUpdate: status code: %d\n", getDateTime().c_str(), statusCode);
+      Serial.printf("%s queenHiveUpdate: response: %s\n", getDateTime().c_str(), response.c_str());
 
       JsonDocument config;
 
       DeserializationError error = deserializeJson(config, response.c_str());
       if (error) {
-        Serial.println("Error:deserialization failed.");
+        Serial.printf("%s queenHiveUpdate: error: deserialization failed: ", getDateTime().c_str());
         Serial.println(error.f_str());
       }
 
@@ -1074,10 +1074,10 @@ void queenHiveUpdate(void *pvParameters) {
           xSemaphoreGive(schedule_motor_mutex);
         }
       } else{
-        Serial.printf("%s JSON object does not have valid keys: %s\n", getDateTime().c_str(), response.c_str());
+        Serial.printf("%s queenHiveUpdate: JSON object does not have valid keys: %s\n", getDateTime().c_str(), response.c_str());
       }
     } else {
-      Serial.printf("%s Connection error: status: %d\n", getDateTime().c_str(), status);
+      Serial.printf("%s queenHiveUpdate: connection error: status: %d\n", getDateTime().c_str(), status);
     }
     set_last_action_to_now();
     vTaskDelay(QUEENS_HIVE_UPDATE_SECONDS * 1000 / portTICK_PERIOD_MS);
@@ -1108,14 +1108,14 @@ void sendWifiConfigToClients(void *pvParameters) {
             statuscode = client.responseStatusCode();
             String response = client.responseBody();
             state_client[i].wifi_config_sent = 1;
-            Serial.printf("%s Sent WiFi config to host: %s, status: %d, response: %s\n", getDateTime().c_str(), state_client[i].ip, statuscode, response.c_str());
+            Serial.printf("%s sendWifiConfigToClients: sent WiFi config to host: %s, status: %d, response: %s\n", getDateTime().c_str(), state_client[i].ip, statuscode, response.c_str());
           } else {
-            Serial.printf("%s Connection error: host: %s, status: %d\n", getDateTime().c_str(), state_client[i].ip, statuscode);
+            Serial.printf("%s sendWifiConfigToClients: connection error: host: %s, status: %d\n", getDateTime().c_str(), state_client[i].ip, statuscode);
           }
         }
         xSemaphoreGive(wifi_config_mutex);
       } else {
-        Serial.printf("%s cannot set WiFi config to client %s: mutex locked.\n", getDateTime().c_str(), state_client[i].ip);
+        Serial.printf("%s sendWifiConfigToClients: cannot set WiFi config to client %s: mutex locked.\n", getDateTime().c_str(), state_client[i].ip);
       }
     }
     set_last_action_to_now();
