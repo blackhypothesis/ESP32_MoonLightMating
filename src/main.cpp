@@ -1,149 +1,375 @@
-#include <Arduino.h>
-#include <ArduinoJson.h>
-#include <WiFi.h>
-#include "SPIFFS.h"
-#include <ESPAsyncWebServer.h>
-#include <ArduinoHttpClient.h>
-// #include <ElegantOTA.h>
-#include <AccelStepper.h>
-#include <TimeLib.h>
+#include "main.h"
 
 #define DEBUG(...) sprintf(message, __VA_ARGS__); debug(task_name, message);
 
-const String VERSION = "0.17.10";
-
-// type of hife: 0 -> bees drones hive, 1 -> bees queens hive
-const int HIVE_DRONES = 0;
-const int HIVE_QUEENS = 1;
-
-const int MODE_WIFI_STA = 1;
-const int MODE_WIFI_AP = 2;
-
-const char* HIVE_DEFAULT_CONFIG_FILE = "/hiveconfig_default.json";
-const char* HIVE_CONFIG_FILE = "/hiveconfig.json";
-
-// const int WIFI_MODE_GPIO = 13;
-const char* WIFI_DEFAULT_CONFIG_FILE = "/wificonfig_default.json";
-const char* WIFI_CONFIG_FILE = "/wificonfig.json";
-
-char root_html[16];
-const char* DRONES_HTML = "/drones.html";
-const char* QUEENS_HTML = "/queens.html";
-const char* WIFI_CONFIG_HTML = "/config.html";
-
-typedef struct hive_cfg {
-  int hive_type;
-  int wifi_mode;
-} hive_cfg_t;
-
-hive_cfg_t hive_config;
-
-typedef struct wifi_cfg {
-  String ssid;
-  String pass;
-  String ip;
-  String gateway;
-  String dns;
-} wifi_cfg_t;
-
-wifi_cfg_t wifi_config;
-
-String mac_address = "00:00:00:00:00:00";
-
-const int QUEENS_HIVE_UPDATE_SECONDS = 10;
-
-const int SLEEP_AFTER_INACTIVITY_SECONDS = 3600;
-const int WAKEUP_BEFORE_MOTOR_MOVE_SECONDS = 30;
-
-// Motor config
-// GPIOs for motors
-const int IN1 = 19;
-const int IN2 = 5;
-const int IN3 = 18;
-const int IN4 = 17;
-
-const int IN5 = 32;
-const int IN6 = 33;
-const int IN7 = 25;
-const int IN8 = 26;
-
-// to initialize motor
-const int MAX_MOTOR = 2;
-const int MOTOR_STEPS_OPEN_CLOSE = 1300;
-
-typedef struct motor_init {
-  int motor_nr;
-  int in1, in2, in3, in4;
-  int max_speed;
-  int acceleration;
-} motor_init_t;
-
-// commands for motor
-typedef struct motor_cmd {
-  int steps;
-  int direction;
-} motor_cmd_t;
-
-static const motor_init_t motor_init[] = { {0, IN1, IN2, IN3, IN4, 200, 200}, {1, IN5, IN6, IN7, IN8, 200, 200} };
-static motor_cmd_t motor_cmd[MAX_MOTOR];
-
-// end switches (analog)
-const int END_SWITCH0 = 36;
-const int END_SWITCH1 = 39;
-const int END_SWITCH2 = 34;
-const int END_SWITCH3 = 35;
-
-const int end_switch[]= {END_SWITCH0, END_SWITCH1};
-
-const int MAX_CLIENTS = 8;
-
-// state of clients
-typedef struct state_client {
-  char ip[16];
-  char mac[20];
-  int active;
-  int wifi_config_sent;
-  time_t last_update_seconds;
-} state_client_t;
-
-static state_client_t state_client[MAX_CLIENTS];
-
-// LED
-const int LED = 2;
-
-typedef struct schedule_motor {
-  int hour_door_open;
-  int minute_door_open;
-  int hour_door_close;
-  int minute_door_close;
-  int queens_delay;
-  int config_enable;
-} schedule_motor_t;
+// write debug messages
+void debug(char *task_name, char* message) {
+    char task_message[192];
+    sprintf(task_message, "%s task=%s %s", getDateTime().c_str(), task_name, message);
+    Serial.printf("%s\n", task_message);
+}
 
 // ---------------------------------------------------------
-// static thread save variables
+// Web Server
 // ---------------------------------------------------------
-// last action in seconds
-static volatile time_t last_action_seconds;
-// Schedule; door open close
-static volatile int seconds_till_door_open;
-static volatile int seconds_till_door_close;
-// schedule motor
-static schedule_motor_t sched_motor = {0, 0, 0, 0, 0, 0};
+// Create AsyncWebServer object on port 80
+AsyncWebServer server(80);
+// Create a WebSocket object
+AsyncWebSocket ws("/ws");
 
-// mutex
-static SemaphoreHandle_t run_motor_mutex;
-static SemaphoreHandle_t setdatetime_mutex;
-static SemaphoreHandle_t hive_config_mutex;
-static SemaphoreHandle_t wifi_config_mutex;
-static SemaphoreHandle_t state_client_mutex;
-static SemaphoreHandle_t last_action_mutex;
-static SemaphoreHandle_t seconds_till_door_move_mutex;
-static SemaphoreHandle_t schedule_motor_mutex;
+// Task: app initialize
+// ---------------------------------------------------------
+void initApp(void *pvParameters) {
+  time_t since_last_action_seconds;
 
-// Queues
-static QueueHandle_t motor_cmd_queue[MAX_MOTOR];
-static QueueHandle_t log_queue;
+  // create mutexes
+  run_motor_mutex = xSemaphoreCreateMutex();
+  setdatetime_mutex = xSemaphoreCreateMutex();
+  hive_config_mutex = xSemaphoreCreateMutex();
+  wifi_config_mutex = xSemaphoreCreateMutex();
+  state_client_mutex = xSemaphoreCreateMutex();
+  last_action_mutex = xSemaphoreCreateMutex();
+  seconds_till_door_move_mutex = xSemaphoreCreateMutex();
+  schedule_motor_mutex = xSemaphoreCreateMutex();
+
+  Serial.begin(115200);
+  vTaskDelay(2000 / portTICK_PERIOD_MS);
+
+  // Filesystem: init
+  // ---------------------------------------------------------
+  initFS();
+
+  // read Hive / WiFi configs
+  // ---------------------------------------------------------
+  readWifiConfigFile();
+  readHiveConfigFile();
+
+  Serial.printf("%s Version %s\n", getDateTime().c_str(), getVersion().c_str());
+
+  // Configuration for webserver according to hive_type
+  // ---------------------------------------------------------
+  if (hive_config.hive_type == HIVE_DRONES) {
+    strcpy(root_html, DRONES_HTML);
+  }
+  else {
+    strcpy(root_html, QUEENS_HTML);
+  }
+
+
+  // WiFi: init
+  // ---------------------------------------------------------
+  Serial.printf("%s Init WiFi\n", getDateTime().c_str());
+  
+  Serial.printf("%s hive_config.hive_type = %d\n", getDateTime().c_str(), hive_config.hive_type);
+  Serial.printf("%s hive_config.wifi_mode = %d\n", getDateTime().c_str(), hive_config.wifi_mode);
+  if (hive_config.wifi_mode == MODE_WIFI_STA) {
+    Serial.printf("%s WiFi Mode: STA.\n", getDateTime().c_str());
+    if (initWiFi() == false) {
+      Serial.printf("%s Unable to connect to SSID %s.\n", getDateTime().c_str(), wifi_config.ssid);
+      ESP.restart();
+    }
+  } else {
+    Serial.printf("%s WiFi Mode: AP.\n", getDateTime().c_str());
+    initAP();
+  }
+
+  // get MAC address after successful connected to WiFi
+  mac_address = WiFi.macAddress();
+
+  // initialize state_client array
+	for (int i = 0; i < MAX_CLIENTS; i++) {
+		strcpy(state_client[i].ip, "0.0.0.0");
+    strcpy(state_client[i].mac, "00:00:00:00:00:00");
+    state_client[i].active = 0;
+    state_client[i].last_update_seconds = now();
+	}
+  // initialize motor command queues
+  for (int i = 0; i < MAX_MOTOR; i++) {
+    motor_cmd_queue[i] = xQueueCreate(5, sizeof(motor_cmd_t));
+  }
+  // initialize log queue
+  log_queue = xQueueCreate(5, 100);
+
+  // initialize schedule motor commands task
+  xTaskCreate(scheduleMotorCommands, "Schedule Motor Commands", 2048, NULL, 3, NULL);
+
+  // initialize motor tasks
+  const char *task_name[] = {"Control Stepper Motor 1", "Control Stepper Motor 2"};
+  for (int i = 0; i < MAX_MOTOR; i++) {
+    xTaskCreate(controlStepperMotor, task_name[i], 2048, (void *) &motor_init[i], 4, NULL);
+  }
+
+  // initialize drone hive task
+  if (hive_config.hive_type == HIVE_DRONES) {
+    xTaskCreate(sendWifiConfigToClients, "Send Wifi config", 4096, NULL, 2, NULL);
+  }
+  // initialize queen hive update task
+  if (hive_config.hive_type == HIVE_QUEENS) {
+    xTaskCreate(queenHiveUpdate, "Queen Hive Update", 4096, NULL, 2, NULL);
+  }
+
+  // Webserver: initialize
+  initWebSocket();
+  // ---------------------------------------------------------
+  // Web Server Root URL
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, root_html, "text/html");
+    set_last_action_to_now();
+  });
+
+  server.on("/", HTTP_POST, [](AsyncWebServerRequest *request) {
+    int params = request->params();
+    for(int i=0;i<params;i++){
+      const AsyncWebParameter* p = request->getParam(i);
+      if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {
+        if(p->isPost()){
+          if (p->name() == "hivetype") {
+            hive_config.hive_type = p->value().toInt();
+          }
+          if (p->name() == "wifimode") {
+            hive_config.wifi_mode = p->value().toInt();
+          }
+          if (p->name() == "ssid") {
+            wifi_config.ssid = p->value().c_str();
+          }
+          if (p->name() == "pass") {
+            wifi_config.pass = p->value().c_str();
+          }
+          if (p->name() == "ip") {
+            wifi_config.ip = p->value().c_str();
+          }
+          if (p->name() == "gateway") {
+            wifi_config.gateway = p->value().c_str();
+          }
+          if (p->name() == "dns") {
+            wifi_config.dns = p->value().c_str();
+          }
+        }
+        xSemaphoreGive(wifi_config_mutex);
+        Serial.printf("%s get wifi config from POST request.\n", getDateTime().c_str());
+      } else {
+        Serial.printf("%s cannot get wifi config from POST request: mutex locked.\n", getDateTime().c_str());
+      }
+      Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
+    }
+    writeWifiConfigFile();
+    writeHiveConfigFile();
+
+    // set wifi_config_sent to 0 in order that the current wifi_config will be sent to all clients again
+    if (hive_config.hive_type == HIVE_DRONES) {
+      for (int i = 0; i < MAX_CLIENTS; i++) {
+      state_client[i].wifi_config_sent = 0;
+      }
+    }
+    request->send(200, "text/plain", "Done. ESP will be restarted to connect with the WiFi settings. New IP address: " + wifi_config.ip);
+    ESP.restart();
+  });
+
+
+  server.on("/getversion", HTTP_GET, [](AsyncWebServerRequest *request){
+    String version = getVersion();
+    Serial.printf("%s getversion %s\n", getDateTime().c_str(), version.c_str());
+    request-> send(200, "application/json", version);
+    set_last_action_to_now();
+  });
+
+  server.on("/getdatetime", HTTP_GET, [](AsyncWebServerRequest *request){
+    JsonDocument dt;
+    dt["datetime"] = getDateTime();
+    char serialized_dt[64];
+    serializeJson(dt, serialized_dt);
+    Serial.printf("%s getdatetime %s\n", getDateTime().c_str(), serialized_dt);
+    request-> send(200, "application/json", String(serialized_dt));
+    set_last_action_to_now();
+  });
+
+  server.on("/gethiveconfig", HTTP_GET, [](AsyncWebServerRequest *request){
+    if (xSemaphoreTake(hive_config_mutex, 200) == pdTRUE) {
+      JsonDocument hc;
+      hc["hivetype"] = hive_config.hive_type;
+      hc["wifimode"] = hive_config.wifi_mode;
+      char serialized_hc[128];
+      serializeJson(hc, serialized_hc);
+      request-> send(200, "application/json", String(serialized_hc));
+      set_last_action_to_now();
+      xSemaphoreGive(hive_config_mutex);
+      Serial.printf("%s /gethiveconfig %s\n", getDateTime().c_str(), serialized_hc);
+    } else {
+      Serial.printf("%s /gethiveconfig, cant't get config: mutex locked.\n", getDateTime().c_str());
+    }
+  });
+
+  server.on("/getwificonfig", HTTP_GET, [](AsyncWebServerRequest *request){
+    if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {
+      JsonDocument wc;
+      wc["ssid"] = wifi_config.ssid;
+      wc["pass"] = wifi_config.pass;
+      wc["ip"] = wifi_config.ip;
+      wc["gateway"] = wifi_config.gateway;
+      wc["dns"] = wifi_config.dns;
+      char serialized_wc[128];
+      serializeJson(wc, serialized_wc);
+      request-> send(200, "application/json", String(serialized_wc));
+      set_last_action_to_now();
+      xSemaphoreGive(wifi_config_mutex);
+      Serial.printf("%s /getwificonfig %s\n", getDateTime().c_str(), serialized_wc);
+    } else {
+      Serial.printf("%s /getwificonfig, cant't get config: mutex locked.\n", getDateTime().c_str());
+    }
+  });
+
+  server.on("/resetdefaultconfig", HTTP_GET, [](AsyncWebServerRequest *request){
+    Serial.printf("%s /resetdefaultconfig %s\n", getDateTime().c_str());
+    resetDefaultConfigs();
+    ESP.restart();
+  });
+
+  server.on("/getconfigstatus", HTTP_GET, [](AsyncWebServerRequest *request){
+    IPAddress client_ip = request->client()->remoteIP();
+    char client_ip_c[16];
+    strcpy(client_ip_c, ip_addr_to_str(client_ip).c_str());
+    String config_status = getConfigStatus();
+    Serial.printf("%s getconfigstatus %s %s\n", getDateTime().c_str(), client_ip_c, config_status.c_str());
+    request->send(200, "application/json", config_status);
+    set_last_action_to_now();
+  });
+
+  server.on("/getconfigstatusclient", HTTP_GET, [](AsyncWebServerRequest *request){
+    String client_mac = "00:00:00:00:00:00";
+    if (request->hasParam("mac")) {
+      client_mac = request->getParam("mac")->value();
+    }
+    IPAddress client_ip = request->client()->remoteIP();
+    char client_ip_c[16];
+    strcpy(client_ip_c, ip_addr_to_str(client_ip).c_str());
+    char client_mac_c[20];
+    strcpy(client_mac_c, client_mac.c_str());
+    String config_status = getConfigStatus();
+    Serial.printf("%s %s %s getconfigstatusclient %s\n", getDateTime().c_str(), client_ip_c, client_mac_c, config_status.c_str());
+     // add client ip to array if it is a new one
+    update_clients(client_ip_c, client_mac_c);
+    request->send(200, "application/json", config_status);
+    set_last_action_to_now();
+  });
+
+  server.on("/setdatetime", HTTP_GET, [](AsyncWebServerRequest *request){
+    String epochseconds;
+    if (request->hasParam("epochseconds")) {
+      epochseconds = request->getParam("epochseconds")->value();
+      JsonDocument dt;
+      dt["datetime"] = getDateTime();    
+      char serialized_dt[64];
+      serializeJson(dt, serialized_dt);
+      Serial.printf("%s setdatetime epochseconds: %ld\n", getDateTime().c_str(), epochseconds.toInt());
+      // update datetime and last action atomic, to avoid race time condition with while loop in initApp (this) task.
+      if (xSemaphoreTake(setdatetime_mutex, 100) == pdTRUE) {
+        setTime(epochseconds.toInt());
+        request->send(200, "application/json", serialized_dt);
+        set_last_action_to_now();
+        xSemaphoreGive(setdatetime_mutex);
+      }
+    }
+  });
+
+  server.on("/setscheduleconfig", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (request->hasParam("hour_open") && request->hasParam("minute_open") && request->hasParam("hour_close") && request->hasParam("minute_close") && request->hasParam("queens_delay") && request->hasParam("config_enable")) {
+      if(xSemaphoreTake(schedule_motor_mutex, 300 / portTICK_PERIOD_MS) == pdTRUE) {
+        sched_motor.hour_door_open = request->getParam("hour_open")->value().toInt();
+        sched_motor.minute_door_open = request->getParam("minute_open")->value().toInt();
+        sched_motor.hour_door_close = request->getParam("hour_close")->value().toInt();
+        sched_motor.minute_door_close = request->getParam("minute_close")->value().toInt();
+        sched_motor.queens_delay = request->getParam("queens_delay")->value().toInt();
+        sched_motor.config_enable = request->getParam("config_enable")->value().toInt();        
+        xSemaphoreGive(schedule_motor_mutex);
+      }
+      JsonDocument hiveconfig;
+      hiveconfig["hour_open"] = sched_motor.hour_door_open;
+      hiveconfig["minute_open"] = sched_motor.minute_door_open;
+      hiveconfig["hour_close"] = sched_motor.hour_door_close;
+      hiveconfig["minute_close"] = sched_motor.minute_door_close;
+      hiveconfig["queens_delay"] = sched_motor.queens_delay;
+      hiveconfig["config_enable"] = sched_motor.config_enable;
+      char serialized_hiveconfig[256];
+      serializeJson(hiveconfig, serialized_hiveconfig);
+      Serial.printf("%s setscheduleconfig %s\n", getDateTime().c_str(), serialized_hiveconfig);
+      request->send(200, "application/json", String(serialized_hiveconfig));
+      set_last_action_to_now();
+    }
+  });
+   
+  server.on("/getclientstates", HTTP_GET, [](AsyncWebServerRequest *request){
+    String client_states = getClientStates();
+    Serial.printf("%s, getclientstates %s\n", getDateTime().c_str(), client_states.c_str());
+    request->send(200, "application/json", client_states);
+    set_last_action_to_now();
+  });
+
+  server.serveStatic("/", SPIFFS, "/");
+
+  // Start OTA capability to webserver
+  // ElegantOTA.begin(&server);
+  // Start server
+  server.begin();
+
+  actionBlink(3, 300);
+
+  // Loop
+  // ---------------------------------------------------------
+  while(true) {
+    // When the maximum number of clients is exceeded this function closes the oldest client.
+    ws.cleanupClients();
+
+     // during the date and time is set via webinterface, we should wait, till datetime and last_action are updated.
+    if (xSemaphoreTake(setdatetime_mutex, 0) == pdTRUE) {
+      since_last_action_seconds = now() - last_action_seconds;
+      xSemaphoreGive(setdatetime_mutex);
+    }
+    else {
+      Serial.printf("%s cannot update seconds_till_last_action: mutex locked.\n", getDateTime().c_str());
+      since_last_action_seconds = 0;
+    }
+
+    if (since_last_action_seconds > SLEEP_AFTER_INACTIVITY_SECONDS) {
+      int seconds_to_sleep = 0;
+      Serial.printf("%s since_last_action_seconds = %ld; now() = %ld; last_action_seconds = %ld\n", getDateTime().c_str(), since_last_action_seconds, now(), last_action_seconds);
+
+      if (xSemaphoreTake(seconds_till_door_move_mutex, 10) == pdTRUE) {
+        seconds_to_sleep = seconds_till_door_open;
+        if (seconds_till_door_close < seconds_till_door_open) {
+          seconds_to_sleep = seconds_till_door_close;
+        }
+        xSemaphoreGive(seconds_till_door_move_mutex);
+      }
+
+      // Wake up 30 seconds before the motor has to move
+      seconds_to_sleep = seconds_to_sleep - WAKEUP_BEFORE_MOTOR_MOVE_SECONDS;
+
+      // Sleep only, if there is enough time till motor has to move
+      if (seconds_to_sleep > 0) {
+        Serial.printf("%s Going to light sleep [seconds]: %d\n", getDateTime().c_str(), seconds_to_sleep);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        WiFi.disconnect(true);
+        WiFi.getSleep();
+        uint64_t microseconds_to_sleep = (uint64_t) seconds_to_sleep * (uint64_t) 1000000;
+        esp_sleep_enable_timer_wakeup(microseconds_to_sleep);
+        esp_light_sleep_start();
+        Serial.printf("%s Back from light sleep.\n", getDateTime().c_str());
+        actionBlink(5, 300);
+
+        Serial.printf("%s WiFi mode: WIFI_STA\n", getDateTime().c_str());
+        if (initWiFi() == false) {
+          // TODO: clear handling
+          if (hive_config.hive_type == HIVE_DRONES) {
+            initAP();
+            strcpy(root_html, WIFI_CONFIG_HTML);
+          }
+        }
+      }
+      set_last_action_to_now();
+    }
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+  }
+}
 
 String getVersion() {
   String v;
@@ -235,14 +461,6 @@ void update_clients(char* ip, char* mac) {
   } else {
     Serial.printf("%s update_client: mutex locked.\n", getDateTime().c_str());
   }    
-}
-
-// write debug messages
-char message[512];
-void debug(char *task_name, char* message) {
-    char task_message[192];
-    sprintf(task_message, "%s task=%s %s", getDateTime().c_str(), task_name, message);
-    Serial.printf("%s\n", task_message);
 }
 
 // Initialize SPIFFS
@@ -619,14 +837,6 @@ bool initAP() {
   return true;
 }
 
-// ---------------------------------------------------------
-// Web Server
-// ---------------------------------------------------------
-// Create AsyncWebServer object on port 80
-AsyncWebServer server(80);
-// Create a WebSocket object
-AsyncWebSocket ws("/ws");
-
 void notifyClients(String state) {
   ws.textAll(state);
 }
@@ -912,361 +1122,6 @@ void sendWifiConfigToClients(void *pvParameters) {
     vTaskDelay(QUEENS_HIVE_UPDATE_SECONDS * 1000 / portTICK_PERIOD_MS);
   }
 }
-
-// Task: app initialize
-// ---------------------------------------------------------
-void initApp(void *pvParameters) {
-  time_t since_last_action_seconds;
-
-  // create mutexes
-  run_motor_mutex = xSemaphoreCreateMutex();
-  setdatetime_mutex = xSemaphoreCreateMutex();
-  hive_config_mutex = xSemaphoreCreateMutex();
-  wifi_config_mutex = xSemaphoreCreateMutex();
-  state_client_mutex = xSemaphoreCreateMutex();
-  last_action_mutex = xSemaphoreCreateMutex();
-  seconds_till_door_move_mutex = xSemaphoreCreateMutex();
-  schedule_motor_mutex = xSemaphoreCreateMutex();
-
-  Serial.begin(115200);
-  vTaskDelay(2000 / portTICK_PERIOD_MS);
-
-  // Filesystem: init
-  // ---------------------------------------------------------
-  initFS();
-
-  // read Hive / WiFi configs
-  // ---------------------------------------------------------
-  readWifiConfigFile();
-  readHiveConfigFile();
-
-  Serial.printf("%s Version %s\n", getDateTime().c_str(), getVersion().c_str());
-
-  // Configuration for webserver according to hive_type
-  // ---------------------------------------------------------
-  if (hive_config.hive_type == HIVE_DRONES) {
-    strcpy(root_html, DRONES_HTML);
-  }
-  else {
-    strcpy(root_html, QUEENS_HTML);
-  }
-
-
-  // WiFi: init
-  // ---------------------------------------------------------
-  Serial.printf("%s Init WiFi\n", getDateTime().c_str());
-  
-  Serial.printf("%s hive_config.hive_type = %d\n", getDateTime().c_str(), hive_config.hive_type);
-  Serial.printf("%s hive_config.wifi_mode = %d\n", getDateTime().c_str(), hive_config.wifi_mode);
-  if (hive_config.wifi_mode == MODE_WIFI_STA) {
-    Serial.printf("%s WiFi Mode: STA.\n", getDateTime().c_str());
-    if (initWiFi() == false) {
-      Serial.printf("%s Unable to connect to SSID %s.\n", getDateTime().c_str(), wifi_config.ssid);
-      ESP.restart();
-    }
-  } else {
-    Serial.printf("%s WiFi Mode: AP.\n", getDateTime().c_str());
-    initAP();
-  }
-
-  // get MAC address after successful connected to WiFi
-  mac_address = WiFi.macAddress();
-
-  // initialize state_client array
-	for (int i = 0; i < MAX_CLIENTS; i++) {
-		strcpy(state_client[i].ip, "0.0.0.0");
-    strcpy(state_client[i].mac, "00:00:00:00:00:00");
-    state_client[i].active = 0;
-    state_client[i].last_update_seconds = now();
-	}
-  // initialize motor command queues
-  for (int i = 0; i < MAX_MOTOR; i++) {
-    motor_cmd_queue[i] = xQueueCreate(5, sizeof(motor_cmd_t));
-  }
-  // initialize log queue
-  log_queue = xQueueCreate(5, 100);
-
-  // initialize schedule motor commands task
-  xTaskCreate(scheduleMotorCommands, "Schedule Motor Commands", 2048, NULL, 3, NULL);
-
-  // initialize motor tasks
-  const char *task_name[] = {"Control Stepper Motor 1", "Control Stepper Motor 2"};
-  for (int i = 0; i < MAX_MOTOR; i++) {
-    xTaskCreate(controlStepperMotor, task_name[i], 2048, (void *) &motor_init[i], 4, NULL);
-  }
-
-  // initialize drone hive task
-  if (hive_config.hive_type == HIVE_DRONES) {
-    xTaskCreate(sendWifiConfigToClients, "Send Wifi config", 4096, NULL, 2, NULL);
-  }
-  // initialize queen hive update task
-  if (hive_config.hive_type == HIVE_QUEENS) {
-    xTaskCreate(queenHiveUpdate, "Queen Hive Update", 4096, NULL, 2, NULL);
-  }
-
-  // Webserver: initialize
-  initWebSocket();
-  // ---------------------------------------------------------
-  // Web Server Root URL
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, root_html, "text/html");
-    set_last_action_to_now();
-  });
-
-  server.on("/", HTTP_POST, [](AsyncWebServerRequest *request) {
-    int params = request->params();
-    for(int i=0;i<params;i++){
-      const AsyncWebParameter* p = request->getParam(i);
-      if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {
-        if(p->isPost()){
-          if (p->name() == "hivetype") {
-            hive_config.hive_type = p->value().toInt();
-          }
-          if (p->name() == "wifimode") {
-            hive_config.wifi_mode = p->value().toInt();
-          }
-          if (p->name() == "ssid") {
-            wifi_config.ssid = p->value().c_str();
-          }
-          if (p->name() == "pass") {
-            wifi_config.pass = p->value().c_str();
-          }
-          if (p->name() == "ip") {
-            wifi_config.ip = p->value().c_str();
-          }
-          if (p->name() == "gateway") {
-            wifi_config.gateway = p->value().c_str();
-          }
-          if (p->name() == "dns") {
-            wifi_config.dns = p->value().c_str();
-          }
-        }
-        xSemaphoreGive(wifi_config_mutex);
-        Serial.printf("%s get wifi config from POST request.\n", getDateTime().c_str());
-      } else {
-        Serial.printf("%s cannot get wifi config from POST request: mutex locked.\n", getDateTime().c_str());
-      }
-      Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-    }
-    writeWifiConfigFile();
-    writeHiveConfigFile();
-
-    // set wifi_config_sent to 0 in order that the current wifi_config will be sent to all clients again
-    if (hive_config.hive_type == HIVE_DRONES) {
-      for (int i = 0; i < MAX_CLIENTS; i++) {
-      state_client[i].wifi_config_sent = 0;
-      }
-    }
-    request->send(200, "text/plain", "Done. ESP will be restarted to connect with the WiFi settings. New IP address: " + wifi_config.ip);
-    ESP.restart();
-  });
-
-
-  server.on("/getversion", HTTP_GET, [](AsyncWebServerRequest *request){
-    String version = getVersion();
-    Serial.printf("%s getversion %s\n", getDateTime().c_str(), version.c_str());
-    request-> send(200, "application/json", version);
-    set_last_action_to_now();
-  });
-
-  server.on("/getdatetime", HTTP_GET, [](AsyncWebServerRequest *request){
-    JsonDocument dt;
-    dt["datetime"] = getDateTime();
-    char serialized_dt[64];
-    serializeJson(dt, serialized_dt);
-    Serial.printf("%s getdatetime %s\n", getDateTime().c_str(), serialized_dt);
-    request-> send(200, "application/json", String(serialized_dt));
-    set_last_action_to_now();
-  });
-
-  server.on("/gethiveconfig", HTTP_GET, [](AsyncWebServerRequest *request){
-    if (xSemaphoreTake(hive_config_mutex, 200) == pdTRUE) {
-      JsonDocument hc;
-      hc["hivetype"] = hive_config.hive_type;
-      hc["wifimode"] = hive_config.wifi_mode;
-      char serialized_hc[128];
-      serializeJson(hc, serialized_hc);
-      request-> send(200, "application/json", String(serialized_hc));
-      set_last_action_to_now();
-      xSemaphoreGive(hive_config_mutex);
-      Serial.printf("%s /gethiveconfig %s\n", getDateTime().c_str(), serialized_hc);
-    } else {
-      Serial.printf("%s /gethiveconfig, cant't get config: mutex locked.\n", getDateTime().c_str());
-    }
-  });
-
-  server.on("/getwificonfig", HTTP_GET, [](AsyncWebServerRequest *request){
-    if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {
-      JsonDocument wc;
-      wc["ssid"] = wifi_config.ssid;
-      wc["pass"] = wifi_config.pass;
-      wc["ip"] = wifi_config.ip;
-      wc["gateway"] = wifi_config.gateway;
-      wc["dns"] = wifi_config.dns;
-      char serialized_wc[128];
-      serializeJson(wc, serialized_wc);
-      request-> send(200, "application/json", String(serialized_wc));
-      set_last_action_to_now();
-      xSemaphoreGive(wifi_config_mutex);
-      Serial.printf("%s /getwificonfig %s\n", getDateTime().c_str(), serialized_wc);
-    } else {
-      Serial.printf("%s /getwificonfig, cant't get config: mutex locked.\n", getDateTime().c_str());
-    }
-  });
-
-  server.on("/resetdefaultconfig", HTTP_GET, [](AsyncWebServerRequest *request){
-    Serial.printf("%s /resetdefaultconfig %s\n", getDateTime().c_str());
-    resetDefaultConfigs();
-    ESP.restart();
-  });
-
-  server.on("/getconfigstatus", HTTP_GET, [](AsyncWebServerRequest *request){
-    IPAddress client_ip = request->client()->remoteIP();
-    char client_ip_c[16];
-    strcpy(client_ip_c, ip_addr_to_str(client_ip).c_str());
-    String config_status = getConfigStatus();
-    Serial.printf("%s getconfigstatus %s %s\n", getDateTime().c_str(), client_ip_c, config_status.c_str());
-    request->send(200, "application/json", config_status);
-    set_last_action_to_now();
-  });
-
-  server.on("/getconfigstatusclient", HTTP_GET, [](AsyncWebServerRequest *request){
-    String client_mac = "00:00:00:00:00:00";
-    if (request->hasParam("mac")) {
-      client_mac = request->getParam("mac")->value();
-    }
-    IPAddress client_ip = request->client()->remoteIP();
-    char client_ip_c[16];
-    strcpy(client_ip_c, ip_addr_to_str(client_ip).c_str());
-    char client_mac_c[20];
-    strcpy(client_mac_c, client_mac.c_str());
-    String config_status = getConfigStatus();
-    Serial.printf("%s %s %s getconfigstatusclient %s\n", getDateTime().c_str(), client_ip_c, client_mac_c, config_status.c_str());
-     // add client ip to array if it is a new one
-    update_clients(client_ip_c, client_mac_c);
-    request->send(200, "application/json", config_status);
-    set_last_action_to_now();
-  });
-
-  server.on("/setdatetime", HTTP_GET, [](AsyncWebServerRequest *request){
-    String epochseconds;
-    if (request->hasParam("epochseconds")) {
-      epochseconds = request->getParam("epochseconds")->value();
-      JsonDocument dt;
-      dt["datetime"] = getDateTime();    
-      char serialized_dt[64];
-      serializeJson(dt, serialized_dt);
-      Serial.printf("%s setdatetime epochseconds: %ld\n", getDateTime().c_str(), epochseconds.toInt());
-      // update datetime and last action atomic, to avoid race time condition with while loop in initApp (this) task.
-      if (xSemaphoreTake(setdatetime_mutex, 100) == pdTRUE) {
-        setTime(epochseconds.toInt());
-        request->send(200, "application/json", serialized_dt);
-        set_last_action_to_now();
-        xSemaphoreGive(setdatetime_mutex);
-      }
-    }
-  });
-
-  server.on("/setscheduleconfig", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if (request->hasParam("hour_open") && request->hasParam("minute_open") && request->hasParam("hour_close") && request->hasParam("minute_close") && request->hasParam("queens_delay") && request->hasParam("config_enable")) {
-      if(xSemaphoreTake(schedule_motor_mutex, 300 / portTICK_PERIOD_MS) == pdTRUE) {
-        sched_motor.hour_door_open = request->getParam("hour_open")->value().toInt();
-        sched_motor.minute_door_open = request->getParam("minute_open")->value().toInt();
-        sched_motor.hour_door_close = request->getParam("hour_close")->value().toInt();
-        sched_motor.minute_door_close = request->getParam("minute_close")->value().toInt();
-        sched_motor.queens_delay = request->getParam("queens_delay")->value().toInt();
-        sched_motor.config_enable = request->getParam("config_enable")->value().toInt();        
-        xSemaphoreGive(schedule_motor_mutex);
-      }
-      JsonDocument hiveconfig;
-      hiveconfig["hour_open"] = sched_motor.hour_door_open;
-      hiveconfig["minute_open"] = sched_motor.minute_door_open;
-      hiveconfig["hour_close"] = sched_motor.hour_door_close;
-      hiveconfig["minute_close"] = sched_motor.minute_door_close;
-      hiveconfig["queens_delay"] = sched_motor.queens_delay;
-      hiveconfig["config_enable"] = sched_motor.config_enable;
-      char serialized_hiveconfig[256];
-      serializeJson(hiveconfig, serialized_hiveconfig);
-      Serial.printf("%s setscheduleconfig %s\n", getDateTime().c_str(), serialized_hiveconfig);
-      request->send(200, "application/json", String(serialized_hiveconfig));
-      set_last_action_to_now();
-    }
-  });
-   
-  server.on("/getclientstates", HTTP_GET, [](AsyncWebServerRequest *request){
-    String client_states = getClientStates();
-    Serial.printf("%s, getclientstates %s\n", getDateTime().c_str(), client_states.c_str());
-    request->send(200, "application/json", client_states);
-    set_last_action_to_now();
-  });
-
-  server.serveStatic("/", SPIFFS, "/");
-
-  // Start OTA capability to webserver
-  // ElegantOTA.begin(&server);
-  // Start server
-  server.begin();
-
-  actionBlink(3, 300);
-
-  // Loop
-  // ---------------------------------------------------------
-  while(true) {
-    // When the maximum number of clients is exceeded this function closes the oldest client.
-    ws.cleanupClients();
-
-     // during the date and time is set via webinterface, we should wait, till datetime and last_action are updated.
-    if (xSemaphoreTake(setdatetime_mutex, 0) == pdTRUE) {
-      since_last_action_seconds = now() - last_action_seconds;
-      xSemaphoreGive(setdatetime_mutex);
-    }
-    else {
-      Serial.printf("%s cannot update seconds_till_last_action: mutex locked.\n", getDateTime().c_str());
-      since_last_action_seconds = 0;
-    }
-
-    if (since_last_action_seconds > SLEEP_AFTER_INACTIVITY_SECONDS) {
-      int seconds_to_sleep = 0;
-      Serial.printf("%s since_last_action_seconds = %ld; now() = %ld; last_action_seconds = %ld\n", getDateTime().c_str(), since_last_action_seconds, now(), last_action_seconds);
-
-      if (xSemaphoreTake(seconds_till_door_move_mutex, 10) == pdTRUE) {
-        seconds_to_sleep = seconds_till_door_open;
-        if (seconds_till_door_close < seconds_till_door_open) {
-          seconds_to_sleep = seconds_till_door_close;
-        }
-        xSemaphoreGive(seconds_till_door_move_mutex);
-      }
-
-      // Wake up 30 seconds before the motor has to move
-      seconds_to_sleep = seconds_to_sleep - WAKEUP_BEFORE_MOTOR_MOVE_SECONDS;
-
-      // Sleep only, if there is enough time till motor has to move
-      if (seconds_to_sleep > 0) {
-        Serial.printf("%s Going to light sleep [seconds]: %d\n", getDateTime().c_str(), seconds_to_sleep);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        WiFi.disconnect(true);
-        WiFi.getSleep();
-        uint64_t microseconds_to_sleep = (uint64_t) seconds_to_sleep * (uint64_t) 1000000;
-        esp_sleep_enable_timer_wakeup(microseconds_to_sleep);
-        esp_light_sleep_start();
-        Serial.printf("%s Back from light sleep.\n", getDateTime().c_str());
-        actionBlink(5, 300);
-
-        Serial.printf("%s WiFi mode: WIFI_STA\n", getDateTime().c_str());
-        if (initWiFi() == false) {
-          // TODO: clear handling
-          if (hive_config.hive_type == HIVE_DRONES) {
-            initAP();
-            strcpy(root_html, WIFI_CONFIG_HTML);
-          }
-        }
-      }
-      set_last_action_to_now();
-    }
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-  }
-}
-
 
 // use "setup & loop" task only to start init task
 void setup() {
