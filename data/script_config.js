@@ -68,6 +68,10 @@ function toggleHiveType(element) {
     } else {
         document.getElementById("config-hivetype-text").innerHTML = "QUEENS";
         document.getElementById("hivetype").value = 1;
+        // force WiFi mode always to STA, when hivetype = QUEENS
+        document.getElementById("cb-wifimode").checked = false;
+        document.getElementById("config-wifimode-text").innerHTML = "STA";
+        document.getElementById("wifimode").value = 1;
         console.log("HiveType QUEENS");
     }
 }
@@ -76,6 +80,10 @@ function toggleWifiMode(element) {
     if (element.checked) {
         document.getElementById("config-wifimode-text").innerHTML = "AP";
         document.getElementById("wifimode").value = 2;
+        // force hivetype always to DRONES, when WiFi mode = AP
+        document.getElementById("cb-hivetype").checked = true;
+        document.getElementById("config-hivetype-text").innerHTML = "DRONES";
+        document.getElementById("hivetype").value = 0;
         console.log("WiFiMode AP");
     } else {
         document.getElementById("config-wifimode-text").innerHTML = "STA";
