@@ -1,5 +1,6 @@
 getHiveConfig()
 getWifiConfig()
+getConfigStatus();
 
 function getHiveConfig() {
     var xhr = new XMLHttpRequest();

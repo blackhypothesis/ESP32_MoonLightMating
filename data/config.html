@@ -5,14 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" type="text/css" href="style-drones.css">
   <link rel="icon" type="image/png" href="favicon.png">
+  <script src="script_configstatus.js"></script>
+  <script src="script_config.js"></script>
 </head>
 
 <body>
   <div class="topnav" id="myTopnav">
     <a href="#" class="disabled">MNM</a>
     <div class="topnav-right">
-      <a href="drones.html">Drones</a>
-      <a href="queenshives.html">Queens</a>
+      <a id="drones-url" href="GET_FROM_msg_drone-ip">Drones</a>
+      <a id="queens-url" href="GET_FROM_msg_drone-ip">Queens</a>
       <a href="config.html">Config</a>
     </div>
     <a href="javascript:void(0);" class="icon" onclick="handleNavBar()">
@@ -82,5 +84,4 @@
     </div>
   </div>
 </body>
-<script src="script_config.js"></script>
 </html>
