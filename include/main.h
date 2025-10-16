@@ -1,3 +1,6 @@
+#ifndef MAIN_H
+#define MAIN_H
+
 #include "Arduino.h"
 #include "SPIFFS.h"
 #include <ArduinoJson.h>
@@ -194,4 +197,4 @@ void initApp(void *pvParameters);
 void setup();
 void loop();
 
-
+#endif
