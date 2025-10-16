@@ -1,18 +1,18 @@
 function getConfigStatus() {
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-            var msg = JSON.parse(this.responseText);
+            let msg = JSON.parse(this.responseText);
             console.log(msg);
-            dip = msg["drone_ip"];
-            hdo = msg["hour_door_open"];
-            mdo = msg["minute_door_open"];
-            hdc = msg["hour_door_close"];
-            mdc = msg["minute_door_close"];
-            sdo = msg["seconds_till_door_open"];
-            sdc = msg["seconds_till_door_close"];
-            qd = msg["queens_delay"];
-            en = msg["config_enable"];
+            let dip = msg["drone_ip"];
+            let hdo = msg["hour_door_open"];
+            let mdo = msg["minute_door_open"];
+            let hdc = msg["hour_door_close"];
+            let mdc = msg["minute_door_close"];
+            let sdo = msg["seconds_till_door_open"];
+            let sdc = msg["seconds_till_door_close"];
+            let qd = msg["queens_delay"];
+            let en = msg["config_enable"];
 
             document.getElementById("drones-url").setAttribute("href", "http://" + dip + "/drones.html");
             document.getElementById("queens-url").setAttribute("href", "http://" + dip + "/queenshives.html");
@@ -28,7 +28,6 @@ function getConfigStatus() {
             } else {
                 document.getElementById("config-enable-text").innerHTML = "Disabled";
                 document.getElementById("config-enable-text").style.backgroundColor = "red";
-
             }
 
             (hdo < 10) ? hdo = "0" + hdo : hdo;

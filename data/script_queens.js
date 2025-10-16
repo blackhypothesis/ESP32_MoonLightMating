@@ -1,7 +1,7 @@
-var gateway = `ws://${window.location.hostname}/ws`;
-var websocket;
+let gateway = `ws://${window.location.hostname}/ws`;
+let websocket;
 window.addEventListener('load', onload);
-var direction;
+let direction;
 getVersion();
 getConfigStatus();
 
@@ -32,9 +32,9 @@ function onClose(event) {
 
 function onMessage(event) {
     console.log(event.data);
-    var msg = JSON.parse(event.data);
+    let msg = JSON.parse(event.data);
     direction = msg["direction"];
-    var motor_element = "motor-" + msg["motor_nr"] + "-state";
+    let motor_element = "motor-" + msg["motor_nr"] + "-state";
     if (direction == 0) {
         document.getElementById(motor_element).innerHTML = "Motor stopped."
         document.getElementById(motor_element).style.color = "red";
@@ -51,7 +51,7 @@ function onMessage(event) {
 
 // ---------------------------------------------------------
 function handleNavBar() {
-    var x = document.getElementById("myTopnav");
+    let x = document.getElementById("myTopnav");
     if (x.className === "topnav") {
         x.className += " responsive";
     }
@@ -62,7 +62,7 @@ function handleNavBar() {
 
 function runMotor() {
     const rbs = document.querySelectorAll('input[name="direction"]');
-    direction;
+    let direction;
     for (const rb of rbs) {
         if (rb.checked) {
             direction = rb.value;
@@ -70,20 +70,20 @@ function runMotor() {
         }
     }
 
-    var steps = document.getElementById("steps").value;
-    var msg = '{"steps":' + steps + ',"direction":' + direction + '}';
+    let steps = document.getElementById("steps").value;
+    let msg = '{"steps":' + steps + ',"direction":' + direction + '}';
     console.log(msg);
     websocket.send(msg);
 }
 
 function secondsToHMS(secs) {
-    var hours = Math.floor(secs / (60 * 60));
+    let hours = Math.floor(secs / (60 * 60));
 
-    var divisor_for_minutes = secs % (60 * 60);
-    var minutes = Math.floor(divisor_for_minutes / 60);
+    let divisor_for_minutes = secs % (60 * 60);
+    let minutes = Math.floor(divisor_for_minutes / 60);
 
-    var divisor_for_seconds = divisor_for_minutes % 60;
-    var seconds = Math.ceil(divisor_for_seconds);
+    let divisor_for_seconds = divisor_for_minutes % 60;
+    let seconds = Math.ceil(divisor_for_seconds);
 
     (hours < 10) ? hours = "0" + hours : hours;
     (minutes < 10) ? minutes = "0" + minutes : minutes;
@@ -93,10 +93,10 @@ function secondsToHMS(secs) {
 }
 
 function getVersion() {
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-            var msg = JSON.parse(this.responseText);
+            let msg = JSON.parse(this.responseText);
             console.log(msg);
             document.getElementById("version").innerHTML = `Version: ${msg["version"]}`;
         }

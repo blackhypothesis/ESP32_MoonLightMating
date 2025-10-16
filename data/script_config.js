@@ -3,13 +3,13 @@ getWifiConfig()
 getConfigStatus();
 
 function getHiveConfig() {
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-            var msg = JSON.parse(this.responseText);
+            let msg = JSON.parse(this.responseText);
             console.log(msg);
-            hive_type = msg["hivetype"];
-            wifi_mode = msg["wifimode"];
+            let hive_type = msg["hivetype"];
+            let wifi_mode = msg["wifimode"];
 
             console.log("hive_type = " + hive_type + " wifi_mode = " + wifi_mode);
             if (hive_type == 0) {
@@ -39,16 +39,16 @@ function getHiveConfig() {
 }
 
 function getWifiConfig() {
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-            var msg = JSON.parse(this.responseText);
+            let msg = JSON.parse(this.responseText);
             console.log(msg);
-            ssid = msg["ssid"];
-            pass = msg["pass"];
-            ip = msg["ip"];
-            gateway = msg["gateway"];
-            dns = msg["dns"];
+            let ssid = msg["ssid"];
+            let pass = msg["pass"];
+            let ip = msg["ip"];
+            let gateway = msg["gateway"];
+            let dns = msg["dns"];
 
             document.getElementById("ssid").value = ssid;
             document.getElementById("pass").value = pass;
@@ -94,17 +94,17 @@ function toggleWifiMode(element) {
 }
 
 function resetDefaultConfig() {
-    ok = ays();
+    let ok = ays();
     if (ok == true) {
         console.log("Reset to default config.")
-        var xhr = new XMLHttpRequest();
+        let xhr = new XMLHttpRequest();
         xhr.open("GET", "/resetdefaultconfig");
         xhr.send();
     }
 }
 
 function ays() {
-    var answer;
+    let answer;
     if (confirm("Are you sure?") == true) {
         answer = true;
     } else {

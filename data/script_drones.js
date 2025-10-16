@@ -1,7 +1,7 @@
-var gateway = `ws://${window.location.hostname}/ws`;
-var websocket;
+let gateway = `ws://${window.location.hostname}/ws`;
+let websocket;
 window.addEventListener('load', onload);
-var direction;
+let direction;
 getVersion();
 getConfigStatus();
 
@@ -33,9 +33,9 @@ function onClose(event) {
 
 function onMessage(event) {
     console.log(event.data);
-    var msg = JSON.parse(event.data);
+    let msg = JSON.parse(event.data);
     direction = msg["direction"];
-    var motor_element = "motor-" + msg["motor_nr"] + "-state";
+    let motor_element = "motor-" + msg["motor_nr"] + "-state";
     if (direction == 0) {
         document.getElementById(motor_element).innerHTML = "Motor stopped."
         document.getElementById(motor_element).style.color = "red";
@@ -52,7 +52,7 @@ function onMessage(event) {
 
 // ---------------------------------------------------------
 function handleNavBar() {
-    var x = document.getElementById("myTopnav");
+    let x = document.getElementById("myTopnav");
     if (x.className === "topnav") {
         x.className += " responsive";
     }
@@ -63,7 +63,7 @@ function handleNavBar() {
 
 function runMotor() {
     const rbs = document.querySelectorAll('input[name="direction"]');
-    direction;
+    let direction;
     for (const rb of rbs) {
         if (rb.checked) {
             direction = rb.value;
@@ -71,19 +71,19 @@ function runMotor() {
         }
     }
 
-    var steps = document.getElementById("steps").value;
-    var msg = '{"steps":' + steps + ',"direction":' + direction + '}';
+    let steps = document.getElementById("steps").value;
+    let msg = '{"steps":' + steps + ',"direction":' + direction + '}';
     console.log(msg);
     websocket.send(msg);
 }
 
 function getDateTime() {
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-            var myObj = JSON.parse(this.responseText);
+            let myObj = JSON.parse(this.responseText);
             console.log(myObj);
-            var datetime = myObj["datetime"];
+            let datetime = myObj["datetime"];
             document.getElementById("datetime").innerHTML = datetime;
         }
     }
@@ -92,13 +92,13 @@ function getDateTime() {
 }
 
 function secondsToHMS(secs) {
-    var hours = Math.floor(secs / (60 * 60));
+    let hours = Math.floor(secs / (60 * 60));
 
-    var divisor_for_minutes = secs % (60 * 60);
-    var minutes = Math.floor(divisor_for_minutes / 60);
+    let divisor_for_minutes = secs % (60 * 60);
+    let minutes = Math.floor(divisor_for_minutes / 60);
 
-    var divisor_for_seconds = divisor_for_minutes % 60;
-    var seconds = Math.ceil(divisor_for_seconds);
+    let divisor_for_seconds = divisor_for_minutes % 60;
+    let seconds = Math.ceil(divisor_for_seconds);
 
     (hours < 10) ? hours = "0" + hours : hours;
     (minutes < 10) ? minutes = "0" + minutes : minutes;
@@ -108,10 +108,10 @@ function secondsToHMS(secs) {
 }
 
 function getVersion() {
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-            var msg = JSON.parse(this.responseText);
+            let msg = JSON.parse(this.responseText);
             console.log(msg);
             document.getElementById("version").innerHTML = `Version: ${msg["version"]}`;
         }
@@ -121,20 +121,20 @@ function getVersion() {
 }
 
 function getConfigStatus() {
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-            var msg = JSON.parse(this.responseText);
+            let msg = JSON.parse(this.responseText);
             console.log(msg);
-            dip = msg["drone_ip"];
-            hdo = msg["hour_door_open"];
-            mdo = msg["minute_door_open"];
-            hdc = msg["hour_door_close"];
-            mdc = msg["minute_door_close"];
-            sdo = msg["seconds_till_door_open"];
-            sdc = msg["seconds_till_door_close"];
-            qd = msg["queens_delay"];
-            en = msg["config_enable"];
+            let dip = msg["drone_ip"];
+            let hdo = msg["hour_door_open"];
+            let mdo = msg["minute_door_open"];
+            let hdc = msg["hour_door_close"];
+            let mdc = msg["minute_door_close"];
+            let sdo = msg["seconds_till_door_open"];
+            let sdc = msg["seconds_till_door_close"];
+            let qd = msg["queens_delay"];
+            let en = msg["config_enable"];
 
             document.getElementById("hour-door-open").value = hdo;
             document.getElementById("minute-door-open").value = mdo;
@@ -163,10 +163,10 @@ function getConfigStatus() {
 }
 
 function getClientStates() {
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-            var msg = JSON.parse(this.responseText);
+            let msg = JSON.parse(this.responseText);
             console.log(msg);
 
             const table = document.getElementById("client-state");
@@ -189,14 +189,14 @@ function getClientStates() {
 }
 
 function setCurrentDateTime() {
-    var datetime = new Date();
-    var epochseconds = datetime.getTime()
+    let datetime = new Date();
+    let epochseconds = datetime.getTime()
     epochseconds = epochseconds / 1000;
     // UTC to GMT+1
     epochseconds = epochseconds + 3600;
     // Summertime
     // epochseconds = epochseconds + 3600;
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.open("GET", "/setdatetime?epochseconds=" + epochseconds, true);
     xhr.send();
 }
@@ -212,13 +212,13 @@ function toggleCheckbox(element) {
 }
 
 function setScheduleConfig() {
-    var valid_params = true;
-    var hour_open = document.getElementById("hour-door-open").value;
-    var minute_open = document.getElementById("minute-door-open").value;
-    var hour_close = document.getElementById("hour-door-close").value;
-    var minute_close = document.getElementById("minute-door-close").value;
-    var queens_delay = document.getElementById("queens-delay").value;
-    var config_enable = 0;
+    let valid_params = true;
+    let hour_open = document.getElementById("hour-door-open").value;
+    let minute_open = document.getElementById("minute-door-open").value;
+    let hour_close = document.getElementById("hour-door-close").value;
+    let minute_close = document.getElementById("minute-door-close").value;
+    let queens_delay = document.getElementById("queens-delay").value;
+    let config_enable = 0;
 
     if (hour_open < 0 || hour_open > 23) {
         document.getElementById("hour-door-open").style.color = "red";
@@ -256,7 +256,7 @@ function setScheduleConfig() {
     console.log("checkbox: " + document.getElementById("config-enable").checked);
 
     if (valid_params == true) {
-        var xhr = new XMLHttpRequest();
+        let xhr = new XMLHttpRequest();
         xhr.open("GET", "/setscheduleconfig?hour_open=" + hour_open + "&minute_open=" + minute_open + "&hour_close=" + hour_close + "&minute_close=" + minute_close + "&queens_delay=" + queens_delay + "&config_enable=" + config_enable);
         xhr.send();
         console.log("hour_open: " + hour_open + " minute_open: " + minute_open + " hour_close: " + hour_close + " minute_close: " + minute_close + " queens_delay: " + queens_delay + " config_enable: " + config_enable);
@@ -269,7 +269,7 @@ function setScheduleConfig() {
 }
 
 function flashColor(c) {
-    var redBox = document.getElementById("save-config");
+    let redBox = document.getElementById("save-config");
     redBox.classList.add(c);
     setTimeout(function () {
         redBox.classList.remove(c);

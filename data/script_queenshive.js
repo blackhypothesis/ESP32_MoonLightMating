@@ -2,7 +2,7 @@ getClientStates();
 
 // ---------------------------------------------------------
 function handleNavBar() {
-    var x = document.getElementById("myTopnav");
+    let x = document.getElementById("myTopnav");
     if (x.className === "topnav") {
         x.className += " responsive";
     }
@@ -12,11 +12,10 @@ function handleNavBar() {
 }
 
 function getClientStates() {
-    var xhr = new XMLHttpRequest();
+    let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
-            // var msg = JSON.parse(this.responseText);
-            var msg = JSON.parse(this.responseText);
+            let msg = JSON.parse(this.responseText);
             console.log(msg);
 
             const table = document.getElementById("client-state");
