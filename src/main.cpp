@@ -44,7 +44,7 @@ void initApp(void *pvParameters) {
   readWifiConfigFile();
   readHiveConfigFile();
 
-  Serial.printf("%s Version %s\n", getDateTime().c_str(), getVersion().c_str());
+  Serial.printf("%s Version %s\n", getDateTime().c_str(), getVersion(hive_config.hive_type).c_str());
 
   // Configuration for webserver according to hive_type
   // ---------------------------------------------------------
@@ -167,7 +167,7 @@ void initApp(void *pvParameters) {
 
 
   server.on("/getversion", HTTP_GET, [](AsyncWebServerRequest *request){
-    String version = getVersion();
+    String version = getVersion(hive_config.hive_type);
     Serial.printf("%s getversion %s\n", getDateTime().c_str(), version.c_str());
     request-> send(200, "application/json", version);
     set_last_action_to_now();
@@ -371,11 +371,11 @@ void initApp(void *pvParameters) {
   }
 }
 
-String getVersion() {
+String getVersion(int hive_type) {
   String v;
   JsonDocument version;
 
-  if (hive_config.hive_type == HIVE_DRONES) {
+  if (hive_type == HIVE_DRONES) {
     v = VERSION + "-D";
   } else {
     v = VERSION + "-Q";
