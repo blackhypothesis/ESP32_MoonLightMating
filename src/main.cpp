@@ -184,6 +184,16 @@ void initApp(void *pvParameters) {
       }
       set_last_action_to_now();
     }
+
+    if (buttonPressed == true) {
+      Serial.printf("%s interrupt handler\n", getDateTime().c_str());
+      actionBlink(5, 100);
+      resetDefaultConfigs();
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      actionBlink(5, 100);
+      ESP.restart();
+    }
+    
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }

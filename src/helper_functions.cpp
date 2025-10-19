@@ -292,9 +292,5 @@ void writeWifiConfigFile() {
 
 // Interrupt Service Routine (ISR)
 void IRAM_ATTR handleButtonPress() {
-  actionBlink(5, 100);
-  resetDefaultConfigs();
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
-  actionBlink(5, 100);
-  ESP.restart();
+  buttonPressed = true;
 }
