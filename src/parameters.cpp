@@ -1,6 +1,6 @@
 #include "parameters.h"
 
-const String VERSION = "0.17.23";
+const String VERSION = "0.17.24";
 
 // create mutexes
 SemaphoreHandle_t run_motor_mutex = xSemaphoreCreateMutex();
@@ -55,6 +55,12 @@ const int IN5 = 32;
 const int IN6 = 33;
 const int IN7 = 25;
 const int IN8 = 26;
+
+// end switches (analog)
+const int END_SWITCH0 = 36;
+const int END_SWITCH1 = 39;
+const int END_SWITCH2 = 34;
+const int END_SWITCH3 = 35;
 
 // to initialize motor
 const int MAX_MOTOR = 2;

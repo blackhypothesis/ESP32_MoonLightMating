@@ -98,10 +98,10 @@ extern const motor_init_t motor_init[];
 extern motor_cmd_t motor_cmd[];
 
 // end switches (analog)
-const int END_SWITCH0 = 36;
-const int END_SWITCH1 = 39;
-const int END_SWITCH2 = 34;
-const int END_SWITCH3 = 35;
+extern const int END_SWITCH0;
+extern const int END_SWITCH1;
+extern const int END_SWITCH2;
+extern const int END_SWITCH3;
 
 const int end_switch[] = {END_SWITCH0, END_SWITCH1};
 

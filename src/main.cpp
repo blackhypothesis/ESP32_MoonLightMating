@@ -499,7 +499,9 @@ void controlStepperMotor(void *pvParameters) {
   const motor_init_t *mc = (motor_init_t *) pvParameters;
   motor_cmd_t cmd;
   bool force_motor_stop = false;
-  int end_switch_analog = 0;
+  int end_switch_old = 0;
+  int end_switch_current = 0;
+  bool end_switch_first = true;
   TickType_t ticks;
 
   Serial.printf("%s motor_init %d, %d, %d, %d, %d, %d, %d\n", getDateTime().c_str(), mc->motor_nr, mc->in1, mc->in2, mc->in3, mc->in4, mc->max_speed, mc->acceleration);
@@ -533,14 +535,21 @@ void controlStepperMotor(void *pvParameters) {
 
         while (stepper.distanceToGo() != 0) {
           // read end switch, every 200 ms
-          if ((xTaskGetTickCount() - ticks) / portTICK_PERIOD_MS > 200 && force_motor_stop == false) {
-            end_switch_analog = analogRead(end_switch[mc->motor_nr]);
-            // Serial.printf("%s End switch %d value = %d\n", getDateTime().c_str(), end_switch[mc->motor_nr], end_switch_analog);
+          if ((xTaskGetTickCount() - ticks) / portTICK_PERIOD_MS > 500 && force_motor_stop == false) {
+            end_switch_current = analogRead(end_switch[mc->motor_nr]);
+
+            if (end_switch_first) {
+              end_switch_old = end_switch_current;
+              end_switch_first = false;
+            }
+            int end_switch_delta = abs(end_switch_current - end_switch_old);
+            end_switch_old = end_switch_current;
+            Serial.printf("%s End switch %d value = %d, delta = %d\n", getDateTime().c_str(), end_switch[mc->motor_nr], end_switch_current, end_switch_delta);
             // stop motor, if end switch is on
-            if (end_switch_analog < 500) {
-              // do not stop motor, because there are no end switches build in
-              // stepper.stop();
-              // force_motor_stop = true;
+            if (end_switch_delta > 400) {
+              Serial.printf("%s Stop motor: end_switch_delta = %d\n", getDateTime().c_str(), end_switch_delta);
+              stepper.stop();
+              force_motor_stop = true;
             }
             ticks = xTaskGetTickCount();
           }
@@ -548,6 +557,7 @@ void controlStepperMotor(void *pvParameters) {
           stepper.run();
           vTaskDelay(1 / portTICK_PERIOD_MS);
         }
+        end_switch_first = true;
 
         // to save energy
         stepper.disableOutputs();
