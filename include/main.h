@@ -11,6 +11,7 @@
 #include <AccelStepper.h>
 #include <TimeLib.h>
 #include "parameters.h"
+#include "helper_functions.h"
 
 // mutex
 static SemaphoreHandle_t run_motor_mutex;
@@ -26,11 +27,6 @@ static SemaphoreHandle_t schedule_motor_mutex;
 static QueueHandle_t motor_cmd_queue[MAX_MOTOR];
 static QueueHandle_t log_queue;
 
-String getVersion(int);
-void actionBlink(int, int);
-String int2str(int);
-String ip_addr_to_str(const IPAddress &);
-String getDateTime();
 void set_last_action_to_now();
 void update_clients(char *, char *);
 void initFS();

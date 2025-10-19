@@ -3,26 +3,28 @@
 
 #include "Arduino.h"
 
-const String VERSION = "0.17.17";
+extern const String VERSION;
 
 // type of hife: 0 -> bees drones hive, 1 -> bees queens hive
-const int HIVE_DRONES = 0;
-const int HIVE_QUEENS = 1;
+extern const int HIVE_DRONES;
+extern const int HIVE_QUEENS;
 
-const int MODE_WIFI_STA = 1;
-const int MODE_WIFI_AP = 2;
+extern const int MODE_WIFI_STA;
+extern const int MODE_WIFI_AP;
 
-const char *HIVE_DEFAULT_CONFIG_FILE = "/hiveconfig_default.json";
-const char *HIVE_CONFIG_FILE = "/hiveconfig.json";
+extern const char *HIVE_DEFAULT_CONFIG_FILE;
+extern const char *HIVE_CONFIG_FILE;
 
 // const int WIFI_MODE_GPIO = 13;
-const char *WIFI_DEFAULT_CONFIG_FILE = "/wificonfig_default.json";
-const char *WIFI_CONFIG_FILE = "/wificonfig.json";
+extern const char *WIFI_DEFAULT_CONFIG_FILE;
+extern const char *WIFI_CONFIG_FILE;
 
-char root_html[16];
-const char *DRONES_HTML = "/drones.html";
-const char *QUEENS_HTML = "/queens.html";
-const char *WIFI_CONFIG_HTML = "/config.html";
+extern char root_html[16];
+extern const char *DRONES_HTML;
+extern const char *QUEENS_HTML;
+extern const char *WIFI_CONFIG_HTML;
+
+
 
 typedef struct hive_cfg
 {
@@ -30,7 +32,7 @@ typedef struct hive_cfg
     int wifi_mode;
 } hive_cfg_t;
 
-hive_cfg_t hive_config;
+extern hive_cfg_t hive_config;
 
 typedef struct wifi_cfg
 {
@@ -41,9 +43,9 @@ typedef struct wifi_cfg
     String dns;
 } wifi_cfg_t;
 
-wifi_cfg_t wifi_config;
+extern wifi_cfg_t wifi_config;
 
-String mac_address = "00:00:00:00:00:00";
+extern String mac_address;
 
 const int QUEENS_HIVE_UPDATE_SECONDS = 10;
 
