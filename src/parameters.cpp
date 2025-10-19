@@ -63,7 +63,7 @@ const int END_SWITCH2 = 34;
 const int END_SWITCH3 = 35;
 
 // to initialize motor
-const int MAX_MOTOR = 2;
+const int MAX_MOTOR = 1;
 const int MOTOR_STEPS_OPEN_CLOSE = 1300;
 
 const motor_init_t motor_init[] = {{0, IN1, IN2, IN3, IN4, 200, 200}, {1, IN5, IN6, IN7, IN8, 200, 200}};

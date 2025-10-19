@@ -62,6 +62,7 @@ void initApp(void *pvParameters) {
     if (initWiFi() == false) {
       Serial.printf("%s Unable to connect to SSID %s.\n", getDateTime().c_str(), wifi_config.ssid);
       if (buttonPressed == true) {
+        Serial.printf("%s during Wifi setup, ...\n", getDateTime().c_str());
         interruptFunction();
       } else {
         ESP.restart();
@@ -190,6 +191,7 @@ void initApp(void *pvParameters) {
     }
 
     if (buttonPressed == true) {
+      Serial.printf("%s in while loop, ...\n", getDateTime().c_str());
       interruptFunction();
     }
     
@@ -394,9 +396,10 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     else {
       const int steps = control_motor["steps"];
       const int direction = control_motor["direction"];
-      Serial.printf("steps = %d, direction = %d\n", steps, direction);  
-      motor_cmd[0] = {steps, direction};
-      motor_cmd[1] = {steps, direction};
+      Serial.printf("steps = %d, direction = %d\n", steps, direction);
+      for (int i = 0; i < MAX_MOTOR; i++) {
+        motor_cmd[i] = {steps, direction};
+      }
 
       for (int i = 0; i < MAX_MOTOR; i++) {
         if (xQueueSend(motor_cmd_queue[i], (void *) &motor_cmd[i], 1000) != pdTRUE) {
