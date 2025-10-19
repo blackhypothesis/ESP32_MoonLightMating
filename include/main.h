@@ -13,16 +13,6 @@
 #include "parameters.h"
 #include "helper_functions.h"
 
-// mutex
-static SemaphoreHandle_t run_motor_mutex;
-static SemaphoreHandle_t setdatetime_mutex;
-static SemaphoreHandle_t hive_config_mutex;
-static SemaphoreHandle_t wifi_config_mutex;
-static SemaphoreHandle_t state_client_mutex;
-static SemaphoreHandle_t last_action_mutex;
-static SemaphoreHandle_t seconds_till_door_move_mutex;
-static SemaphoreHandle_t schedule_motor_mutex;
-
 // Queues
 static QueueHandle_t motor_cmd_queue[MAX_MOTOR];
 static QueueHandle_t log_queue;

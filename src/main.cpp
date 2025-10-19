@@ -23,15 +23,6 @@ AsyncWebSocket ws("/ws");
 void initApp(void *pvParameters) {
   time_t since_last_action_seconds;
 
-  // create mutexes
-  run_motor_mutex = xSemaphoreCreateMutex();
-  setdatetime_mutex = xSemaphoreCreateMutex();
-  hive_config_mutex = xSemaphoreCreateMutex();
-  wifi_config_mutex = xSemaphoreCreateMutex();
-  state_client_mutex = xSemaphoreCreateMutex();
-  last_action_mutex = xSemaphoreCreateMutex();
-  seconds_till_door_move_mutex = xSemaphoreCreateMutex();
-  schedule_motor_mutex = xSemaphoreCreateMutex();
 
   Serial.begin(115200);
   vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -114,107 +105,11 @@ void initApp(void *pvParameters) {
   // ---------------------------------------------------------
   // Web Server Root URL
   server.on("/", HTTP_GET, requestRootURL);
-
-  server.on("/", HTTP_POST, [](AsyncWebServerRequest *request) {
-    int params = request->params();
-    for(int i=0;i<params;i++){
-      const AsyncWebParameter* p = request->getParam(i);
-      if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {
-        if(p->isPost()){
-          if (p->name() == "hivetype") {
-            hive_config.hive_type = p->value().toInt();
-          }
-          if (p->name() == "wifimode") {
-            hive_config.wifi_mode = p->value().toInt();
-          }
-          if (p->name() == "ssid") {
-            wifi_config.ssid = p->value().c_str();
-          }
-          if (p->name() == "pass") {
-            wifi_config.pass = p->value().c_str();
-          }
-          if (p->name() == "ip") {
-            wifi_config.ip = p->value().c_str();
-          }
-          if (p->name() == "gateway") {
-            wifi_config.gateway = p->value().c_str();
-          }
-          if (p->name() == "dns") {
-            wifi_config.dns = p->value().c_str();
-          }
-        }
-        xSemaphoreGive(wifi_config_mutex);
-        Serial.printf("%s get wifi config from POST request.\n", getDateTime().c_str());
-      } else {
-        Serial.printf("%s cannot get wifi config from POST request: mutex locked.\n", getDateTime().c_str());
-      }
-      Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-    }
-    writeWifiConfigFile();
-    writeHiveConfigFile();
-
-    // set wifi_config_sent to 0 in order that the current wifi_config will be sent to all clients again
-    if (hive_config.hive_type == HIVE_DRONES) {
-      for (int i = 0; i < MAX_CLIENTS; i++) {
-      state_client[i].wifi_config_sent = 0;
-      }
-    }
-    request->send(200, "text/plain", "Done. ESP will be restarted to connect with the WiFi settings. New IP address: " + wifi_config.ip);
-    ESP.restart();
-  });
-
-
-  server.on("/getversion", HTTP_GET, [](AsyncWebServerRequest *request){
-    String version = getVersion(hive_config.hive_type);
-    Serial.printf("%s getversion %s\n", getDateTime().c_str(), version.c_str());
-    request-> send(200, "application/json", version);
-    set_last_action_to_now();
-  });
-
-  server.on("/getdatetime", HTTP_GET, [](AsyncWebServerRequest *request){
-    JsonDocument dt;
-    dt["datetime"] = getDateTime();
-    char serialized_dt[64];
-    serializeJson(dt, serialized_dt);
-    Serial.printf("%s getdatetime %s\n", getDateTime().c_str(), serialized_dt);
-    request-> send(200, "application/json", String(serialized_dt));
-    set_last_action_to_now();
-  });
-
-  server.on("/gethiveconfig", HTTP_GET, [](AsyncWebServerRequest *request){
-    if (xSemaphoreTake(hive_config_mutex, 200) == pdTRUE) {
-      JsonDocument hc;
-      hc["hivetype"] = hive_config.hive_type;
-      hc["wifimode"] = hive_config.wifi_mode;
-      char serialized_hc[128];
-      serializeJson(hc, serialized_hc);
-      request-> send(200, "application/json", String(serialized_hc));
-      set_last_action_to_now();
-      xSemaphoreGive(hive_config_mutex);
-      Serial.printf("%s /gethiveconfig %s\n", getDateTime().c_str(), serialized_hc);
-    } else {
-      Serial.printf("%s /gethiveconfig, cant't get config: mutex locked.\n", getDateTime().c_str());
-    }
-  });
-
-  server.on("/getwificonfig", HTTP_GET, [](AsyncWebServerRequest *request){
-    if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {
-      JsonDocument wc;
-      wc["ssid"] = wifi_config.ssid;
-      wc["pass"] = wifi_config.pass;
-      wc["ip"] = wifi_config.ip;
-      wc["gateway"] = wifi_config.gateway;
-      wc["dns"] = wifi_config.dns;
-      char serialized_wc[128];
-      serializeJson(wc, serialized_wc);
-      request-> send(200, "application/json", String(serialized_wc));
-      set_last_action_to_now();
-      xSemaphoreGive(wifi_config_mutex);
-      Serial.printf("%s /getwificonfig %s\n", getDateTime().c_str(), serialized_wc);
-    } else {
-      Serial.printf("%s /getwificonfig, cant't get config: mutex locked.\n", getDateTime().c_str());
-    }
-  });
+  server.on("/", HTTP_POST, requestSaveHiveWifiConfig);
+  server.on("/getversion", HTTP_GET, requestGetVersion);
+  server.on("/getdatetime", HTTP_GET, requestGetDateTime);
+  server.on("/gethiveconfig", HTTP_GET, requestGetHiveConfig);
+  server.on("/getwificonfig", requestGetWifiConfig);
 
   server.on("/resetdefaultconfig", HTTP_GET, [](AsyncWebServerRequest *request){
     Serial.printf("%s /resetdefaultconfig %s\n", getDateTime().c_str());
@@ -477,10 +372,10 @@ void readHiveConfigFile() {
   JsonObject documentRoot = cfg_json.as<JsonObject>();
   int hive_type = documentRoot["hive_type"];
   int wifi_mode = documentRoot["wifi_mode"];
-  if (xSemaphoreTake(hive_config_mutex, 200) == pdTRUE) {
+  if (xSemaphoreTake(config_mutex, 200) == pdTRUE) {
     hive_config.hive_type = hive_type;
     hive_config.wifi_mode = wifi_mode;
-    xSemaphoreGive(hive_config_mutex);
+    xSemaphoreGive(config_mutex);
     Serial.printf("%s read Hive config from file.\n", getDateTime().c_str());
   } else {
     Serial.printf("%s cannot read Hive cnfig file: mutex locked.\n", getDateTime().c_str());
@@ -489,10 +384,10 @@ void readHiveConfigFile() {
 
 void writeHiveConfigFile() {
   JsonDocument h_config;
-  if (xSemaphoreTake(hive_config_mutex, 200) == pdTRUE) {
+  if (xSemaphoreTake(config_mutex, 200) == pdTRUE) {
     h_config["hive_type"] = hive_config.hive_type;
     h_config["wifi_mode"] = hive_config.wifi_mode;
-    xSemaphoreGive(hive_config_mutex);
+    xSemaphoreGive(config_mutex);
     Serial.printf("%s wrote Hive cnfig to file.\n", getDateTime().c_str());
   } else {
     Serial.printf("%s cannot write Hive cnfig file: mutex locked.\n", getDateTime().c_str());
@@ -518,13 +413,13 @@ void readWifiConfigFile() {
   const char* ip = documentRoot["ip"];
   const char* gateway = documentRoot["gateway"];
   const char* dns = documentRoot["dns"];
-  if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {
+  if (xSemaphoreTake(config_mutex, 200) == pdTRUE) {
     wifi_config.ssid = String(ssid);
     wifi_config.pass = String(pass);
     wifi_config.ip = String(ip);
     wifi_config.gateway = String(gateway);
     wifi_config.dns = String(dns);
-    xSemaphoreGive(wifi_config_mutex);
+    xSemaphoreGive(config_mutex);
     Serial.printf("%s read WiFi config from file.\n", getDateTime().c_str());
   } else {
     Serial.printf("%s cannot read WiFi cnfig file: mutex locked.\n", getDateTime().c_str());
@@ -533,13 +428,13 @@ void readWifiConfigFile() {
 
 void writeWifiConfigFile() {
   JsonDocument w_config;
-  if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {  
+  if (xSemaphoreTake(config_mutex, 200) == pdTRUE) {  
     w_config["ssid"] = wifi_config.ssid.c_str();
     w_config["pass"] = wifi_config.pass.c_str();
     w_config["ip"] = wifi_config.ip.c_str();
     w_config["gateway"] = wifi_config.gateway.c_str();
     w_config["dns"] = wifi_config.dns.c_str();
-    xSemaphoreGive(wifi_config_mutex);
+    xSemaphoreGive(config_mutex);
     Serial.printf("%s wrote WiFi cnfig to file.\n", getDateTime().c_str());
   } else {
     Serial.printf("%s cannot write WiFi cnfig file: mutex locked.\n", getDateTime().c_str());
@@ -1045,7 +940,7 @@ void sendWifiConfigToClients(void *pvParameters) {
         break;
       }
 
-      if (xSemaphoreTake(wifi_config_mutex, 200) == pdTRUE) {
+      if (xSemaphoreTake(config_mutex, 200) == pdTRUE) {
         if (state_client[i].wifi_config_sent == 0) {
           HttpClient client = HttpClient(wifi, state_client[i].ip, 80);
           String contentType = "application/x-www-form-urlencoded";
@@ -1062,7 +957,7 @@ void sendWifiConfigToClients(void *pvParameters) {
             Serial.printf("%s sendWifiConfigToClients: connection error: host: %s, status: %d\n", getDateTime().c_str(), state_client[i].ip, statuscode);
           }
         }
-        xSemaphoreGive(wifi_config_mutex);
+        xSemaphoreGive(config_mutex);
       } else {
         Serial.printf("%s sendWifiConfigToClients: cannot set WiFi config to client %s: mutex locked.\n", getDateTime().c_str(), state_client[i].ip);
       }

@@ -5,6 +5,15 @@
 
 extern const String VERSION;
 
+// mutex
+extern SemaphoreHandle_t run_motor_mutex;
+extern SemaphoreHandle_t setdatetime_mutex;
+extern SemaphoreHandle_t config_mutex;
+extern SemaphoreHandle_t state_client_mutex;
+extern SemaphoreHandle_t last_action_mutex;
+extern SemaphoreHandle_t seconds_till_door_move_mutex;
+extern SemaphoreHandle_t schedule_motor_mutex;
+
 // type of hife: 0 -> bees drones hive, 1 -> bees queens hive
 extern const int HIVE_DRONES;
 extern const int HIVE_QUEENS;

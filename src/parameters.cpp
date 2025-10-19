@@ -2,6 +2,15 @@
 
 const String VERSION = "0.17.18";
 
+// create mutexes
+SemaphoreHandle_t run_motor_mutex = xSemaphoreCreateMutex();
+SemaphoreHandle_t setdatetime_mutex = xSemaphoreCreateMutex();
+SemaphoreHandle_t config_mutex = xSemaphoreCreateMutex();
+SemaphoreHandle_t state_client_mutex = xSemaphoreCreateMutex();
+SemaphoreHandle_t last_action_mutex = xSemaphoreCreateMutex();
+SemaphoreHandle_t seconds_till_door_move_mutex = xSemaphoreCreateMutex();
+SemaphoreHandle_t schedule_motor_mutex = xSemaphoreCreateMutex();
+
 // type of hife: 0 -> bees drones hive, 1 -> bees queens hive
 const int HIVE_DRONES = 0;
 const int HIVE_QUEENS = 1;
