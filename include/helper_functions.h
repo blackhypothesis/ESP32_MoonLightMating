@@ -28,5 +28,6 @@ void readWifiConfigFile();
 void writeWifiConfigFile();
 
 void IRAM_ATTR handleButtonPress();
+void interruptFunction();
 
 #endif

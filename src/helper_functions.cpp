@@ -294,3 +294,12 @@ void writeWifiConfigFile() {
 void IRAM_ATTR handleButtonPress() {
   buttonPressed = true;
 }
+
+void interruptFunction() {
+  Serial.printf("%s interrupt handler\n", getDateTime().c_str());
+  actionBlink(5, 100);
+  resetDefaultConfigs();
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  actionBlink(5, 100);
+  ESP.restart();
+}

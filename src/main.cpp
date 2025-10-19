@@ -61,7 +61,11 @@ void initApp(void *pvParameters) {
     Serial.printf("%s WiFi Mode: STA.\n", getDateTime().c_str());
     if (initWiFi() == false) {
       Serial.printf("%s Unable to connect to SSID %s.\n", getDateTime().c_str(), wifi_config.ssid);
-      ESP.restart();
+      if (buttonPressed == true) {
+        interruptFunction();
+      } else {
+        ESP.restart();
+      }
     }
   } else {
     Serial.printf("%s WiFi Mode: AP.\n", getDateTime().c_str());
@@ -186,12 +190,7 @@ void initApp(void *pvParameters) {
     }
 
     if (buttonPressed == true) {
-      Serial.printf("%s interrupt handler\n", getDateTime().c_str());
-      actionBlink(5, 100);
-      resetDefaultConfigs();
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
-      actionBlink(5, 100);
-      ESP.restart();
+      interruptFunction();
     }
     
     vTaskDelay(1000 / portTICK_PERIOD_MS);
