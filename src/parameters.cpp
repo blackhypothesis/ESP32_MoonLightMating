@@ -1,6 +1,6 @@
 #include "parameters.h"
 
-const String VERSION = "0.17.18";
+const String VERSION = "0.17.19";
 
 // create mutexes
 SemaphoreHandle_t run_motor_mutex = xSemaphoreCreateMutex();
@@ -34,3 +34,5 @@ hive_cfg_t hive_config;
 wifi_cfg_t wifi_config;
 
 String mac_address = "00:00:00:00:00:00";
+
+schedule_motor_t sched_motor = {0, 0, 0, 0, 0, 0};

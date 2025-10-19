@@ -33,8 +33,6 @@ extern const char *DRONES_HTML;
 extern const char *QUEENS_HTML;
 extern const char *WIFI_CONFIG_HTML;
 
-
-
 typedef struct hive_cfg
 {
     int hive_type;
@@ -139,6 +137,6 @@ static volatile time_t last_action_seconds;
 static volatile int seconds_till_door_open;
 static volatile int seconds_till_door_close;
 // schedule motor
-static schedule_motor_t sched_motor = {0, 0, 0, 0, 0, 0};
+extern schedule_motor_t sched_motor;
 
 #endif

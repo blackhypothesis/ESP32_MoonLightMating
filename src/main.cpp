@@ -110,85 +110,12 @@ void initApp(void *pvParameters) {
   server.on("/getdatetime", HTTP_GET, requestGetDateTime);
   server.on("/gethiveconfig", HTTP_GET, requestGetHiveConfig);
   server.on("/getwificonfig", requestGetWifiConfig);
+  server.on("/resetdefaultconfig", HTTP_GET, requestResetDefaultConfig);
+  server.on("/getconfigstatus", HTTP_GET, requestGetConfigStatus);
+  server.on("/getconfigstatusclient", HTTP_GET, requestGetConfigStatusClient);
+  server.on("/setdatetime", HTTP_GET, requestSetDateTime);
 
-  server.on("/resetdefaultconfig", HTTP_GET, [](AsyncWebServerRequest *request){
-    Serial.printf("%s /resetdefaultconfig %s\n", getDateTime().c_str());
-    resetDefaultConfigs();
-    ESP.restart();
-  });
-
-  server.on("/getconfigstatus", HTTP_GET, [](AsyncWebServerRequest *request){
-    IPAddress client_ip = request->client()->remoteIP();
-    char client_ip_c[16];
-    strcpy(client_ip_c, ip_addr_to_str(client_ip).c_str());
-    String config_status = getConfigStatus();
-    Serial.printf("%s getconfigstatus %s %s\n", getDateTime().c_str(), client_ip_c, config_status.c_str());
-    request->send(200, "application/json", config_status);
-    set_last_action_to_now();
-  });
-
-  server.on("/getconfigstatusclient", HTTP_GET, [](AsyncWebServerRequest *request){
-    String client_mac = "00:00:00:00:00:00";
-    if (request->hasParam("mac")) {
-      client_mac = request->getParam("mac")->value();
-    }
-    IPAddress client_ip = request->client()->remoteIP();
-    char client_ip_c[16];
-    strcpy(client_ip_c, ip_addr_to_str(client_ip).c_str());
-    char client_mac_c[20];
-    strcpy(client_mac_c, client_mac.c_str());
-    String config_status = getConfigStatus();
-    Serial.printf("%s %s %s getconfigstatusclient %s\n", getDateTime().c_str(), client_ip_c, client_mac_c, config_status.c_str());
-     // add client ip to array if it is a new one
-    update_clients(client_ip_c, client_mac_c);
-    request->send(200, "application/json", config_status);
-    set_last_action_to_now();
-  });
-
-  server.on("/setdatetime", HTTP_GET, [](AsyncWebServerRequest *request){
-    String epochseconds;
-    if (request->hasParam("epochseconds")) {
-      epochseconds = request->getParam("epochseconds")->value();
-      JsonDocument dt;
-      dt["datetime"] = getDateTime();    
-      char serialized_dt[64];
-      serializeJson(dt, serialized_dt);
-      Serial.printf("%s setdatetime epochseconds: %ld\n", getDateTime().c_str(), epochseconds.toInt());
-      // update datetime and last action atomic, to avoid race time condition with while loop in initApp (this) task.
-      if (xSemaphoreTake(setdatetime_mutex, 100) == pdTRUE) {
-        setTime(epochseconds.toInt());
-        request->send(200, "application/json", serialized_dt);
-        set_last_action_to_now();
-        xSemaphoreGive(setdatetime_mutex);
-      }
-    }
-  });
-
-  server.on("/setscheduleconfig", HTTP_GET, [](AsyncWebServerRequest *request) {
-    if (request->hasParam("hour_open") && request->hasParam("minute_open") && request->hasParam("hour_close") && request->hasParam("minute_close") && request->hasParam("queens_delay") && request->hasParam("config_enable")) {
-      if(xSemaphoreTake(schedule_motor_mutex, 300 / portTICK_PERIOD_MS) == pdTRUE) {
-        sched_motor.hour_door_open = request->getParam("hour_open")->value().toInt();
-        sched_motor.minute_door_open = request->getParam("minute_open")->value().toInt();
-        sched_motor.hour_door_close = request->getParam("hour_close")->value().toInt();
-        sched_motor.minute_door_close = request->getParam("minute_close")->value().toInt();
-        sched_motor.queens_delay = request->getParam("queens_delay")->value().toInt();
-        sched_motor.config_enable = request->getParam("config_enable")->value().toInt();        
-        xSemaphoreGive(schedule_motor_mutex);
-      }
-      JsonDocument hiveconfig;
-      hiveconfig["hour_open"] = sched_motor.hour_door_open;
-      hiveconfig["minute_open"] = sched_motor.minute_door_open;
-      hiveconfig["hour_close"] = sched_motor.hour_door_close;
-      hiveconfig["minute_close"] = sched_motor.minute_door_close;
-      hiveconfig["queens_delay"] = sched_motor.queens_delay;
-      hiveconfig["config_enable"] = sched_motor.config_enable;
-      char serialized_hiveconfig[256];
-      serializeJson(hiveconfig, serialized_hiveconfig);
-      Serial.printf("%s setscheduleconfig %s\n", getDateTime().c_str(), serialized_hiveconfig);
-      request->send(200, "application/json", String(serialized_hiveconfig));
-      set_last_action_to_now();
-    }
-  });
+  server.on("/setscheduleconfig", HTTP_GET, requestSetScheduleConfig);
    
   server.on("/getclientstates", HTTP_GET, [](AsyncWebServerRequest *request){
     String client_states = getClientStates();
