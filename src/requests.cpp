@@ -195,3 +195,7 @@ void requestGetClientStates(AsyncWebServerRequest *request) {
   request->send(200, "application/json", client_states);
   set_last_action_to_now();
 }
+
+void requestScanWifi(AsyncWebServerRequest *request) {
+  scanWiFi();
+}

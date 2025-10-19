@@ -12,22 +12,12 @@
 #include <TimeLib.h>
 #include "parameters.h"
 #include "helper_functions.h"
+#include "requests.h"
 
-// Queues
-static QueueHandle_t motor_cmd_queue[MAX_MOTOR];
-static QueueHandle_t log_queue;
 
 void set_last_action_to_now();
 void update_clients(char *, char *);
 void initFS();
-
-String readFile(fs::FS &, const char *);
-void writeFile(fs::FS &, const char *, const char *);
-void resetDefaultConfigs();
-void readHiveConfigFile();
-void writeHiveConfigFile();
-void readWifiConfigFile();
-void writeWifiConfigFile();
 
 int secondsTillMotorStart(String);
 

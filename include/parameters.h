@@ -54,26 +54,29 @@ extern wifi_cfg_t wifi_config;
 
 extern String mac_address;
 
-const int QUEENS_HIVE_UPDATE_SECONDS = 10;
+extern const int QUEENS_HIVE_UPDATE_SECONDS;
 
-const int SLEEP_AFTER_INACTIVITY_SECONDS = 3600;
-const int WAKEUP_BEFORE_MOTOR_MOVE_SECONDS = 30;
+extern const int SLEEP_AFTER_INACTIVITY_SECONDS;
+extern const int WAKEUP_BEFORE_MOTOR_MOVE_SECONDS;
+
+// Interrupt
+extern const int INTERRUPT_PIN;
 
 // Motor config
 // GPIOs for motors
-const int IN1 = 19;
-const int IN2 = 5;
-const int IN3 = 18;
-const int IN4 = 17;
+extern const int IN1;
+extern const int IN2;
+extern const int IN3;
+extern const int IN4;
 
-const int IN5 = 32;
-const int IN6 = 33;
-const int IN7 = 25;
-const int IN8 = 26;
+extern const int IN5;
+extern const int IN6;
+extern const int IN7;
+extern const int IN8;
 
 // to initialize motor
-const int MAX_MOTOR = 2;
-const int MOTOR_STEPS_OPEN_CLOSE = 1300;
+extern const int MAX_MOTOR;
+extern const int MOTOR_STEPS_OPEN_CLOSE;
 
 typedef struct motor_init
 {
@@ -90,8 +93,8 @@ typedef struct motor_cmd
     int direction;
 } motor_cmd_t;
 
-static const motor_init_t motor_init[] = {{0, IN1, IN2, IN3, IN4, 200, 200}, {1, IN5, IN6, IN7, IN8, 200, 200}};
-static motor_cmd_t motor_cmd[MAX_MOTOR];
+extern const motor_init_t motor_init[];
+extern motor_cmd_t motor_cmd[];
 
 // end switches (analog)
 const int END_SWITCH0 = 36;
@@ -138,5 +141,8 @@ static volatile int seconds_till_door_open;
 static volatile int seconds_till_door_close;
 // schedule motor
 extern schedule_motor_t sched_motor;
+
+extern QueueHandle_t motor_cmd_queue[];
+extern QueueHandle_t log_queue;
 
 #endif

@@ -17,5 +17,6 @@ void requestGetConfigStatusClient(AsyncWebServerRequest *request);
 void requestSetDateTime(AsyncWebServerRequest *request);
 void requestSetScheduleConfig(AsyncWebServerRequest *request);
 void requestGetClientStates(AsyncWebServerRequest *request);
+void requestScanWifi(AsyncWebServerRequest *request);
 
 #endif

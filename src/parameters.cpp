@@ -35,4 +35,35 @@ wifi_cfg_t wifi_config;
 
 String mac_address = "00:00:00:00:00:00";
 
+const int QUEENS_HIVE_UPDATE_SECONDS = 10;
+
+const int SLEEP_AFTER_INACTIVITY_SECONDS = 3600;
+const int WAKEUP_BEFORE_MOTOR_MOVE_SECONDS = 30;
+
+// Interrupt
+const int INTERRUPT_PIN = 27;
+
+// Motor config
+// GPIOs for motors
+const int IN1 = 19;
+const int IN2 = 5;
+const int IN3 = 18;
+const int IN4 = 17;
+
+const int IN5 = 32;
+const int IN6 = 33;
+const int IN7 = 25;
+const int IN8 = 26;
+
+// to initialize motor
+const int MAX_MOTOR = 2;
+const int MOTOR_STEPS_OPEN_CLOSE = 1300;
+
+const motor_init_t motor_init[] = {{0, IN1, IN2, IN3, IN4, 200, 200}, {1, IN5, IN6, IN7, IN8, 200, 200}};
+motor_cmd_t motor_cmd[MAX_MOTOR];
+
 schedule_motor_t sched_motor = {0, 0, 0, 0, 0, 0};
+
+// Queues
+QueueHandle_t motor_cmd_queue[MAX_MOTOR];
+QueueHandle_t log_queue;
