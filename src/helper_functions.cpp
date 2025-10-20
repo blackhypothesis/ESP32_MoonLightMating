@@ -290,6 +290,27 @@ void writeWifiConfigFile() {
   writeFile(SPIFFS, WIFI_CONFIG_FILE, serialized_w_config);
 }
 
+String getHiveConfig() {
+  JsonDocument hive_c;
+  hive_c["hive_type"] = hive_config.hive_type;
+  hive_c["wifi_mode"] = hive_config.wifi_mode;
+  char serialized_hive_c[128];
+  serializeJson(hive_c, serialized_hive_c);
+  return String(serialized_hive_c);
+}
+
+String getWifiConfig() {
+  JsonDocument wifi_c;
+  wifi_c["ssid"] = wifi_config.ssid;
+  wifi_c["pass"] = wifi_config.pass;
+  wifi_c["ip"] = wifi_config.ip;
+  wifi_c["gateway"] = wifi_config.gateway;
+  wifi_c["ssid"] = wifi_config.dns;
+  char serialized_wifi_c[128];
+  serializeJson(wifi_c, serialized_wifi_c);
+  return String(serialized_wifi_c);
+}
+
 // Interrupt Service Routine (ISR)
 void IRAM_ATTR handleButtonPress() {
   buttonPressed = true;

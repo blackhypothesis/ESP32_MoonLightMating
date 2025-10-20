@@ -22,8 +22,6 @@ void initFS();
 int secondsTillMotorStart(String);
 
 String getConfigStatus();
-String getHiveConfig();
-String getWifiConfig();
 
 String getClientStates();
 

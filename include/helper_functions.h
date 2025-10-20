@@ -26,6 +26,8 @@ void readHiveConfigFile();
 void writeHiveConfigFile();
 void readWifiConfigFile();
 void writeWifiConfigFile();
+String getHiveConfig();
+String getWifiConfig();
 
 void IRAM_ATTR handleButtonPress();
 void interruptFunction();
