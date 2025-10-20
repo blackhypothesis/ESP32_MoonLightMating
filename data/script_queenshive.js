@@ -1,6 +1,7 @@
-getClientStates();
+window.onload = function() {
+    getClientStates();
+};
 
-// ---------------------------------------------------------
 function handleNavBar() {
     let x = document.getElementById("myTopnav");
     if (x.className === "topnav") {
