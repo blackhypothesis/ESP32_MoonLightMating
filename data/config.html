@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" type="text/css" href="style-drones.css">
   <link rel="icon" type="image/png" href="favicon.png">
-  <script src="script_configstatus.js"></script>
   <script src="script_config.js"></script>
 </head>
 
@@ -77,6 +76,21 @@
           <div><input type ="submit" value ="Submit"></div>
           </p>
         </form>
+      </div>
+      <div class="card">
+        <table>
+          <tr>
+            <td><p id="datetime"></p></td>
+          </tr>
+        </table>
+        <table>
+          <tr>
+            <td>Timezone UTC</td>
+            <td><input type="number" id="utc-offset" name="utc-offset" min="-12" max="12" value="0"></td>
+          </tr>
+        </table>
+        <p><button onClick="setCurrentDateTime()">Set current time</button></p>
+        <p><button onclick="getDateTime()">Show current time</button></p>
       </div>
       <div class="card">
         <p><button id="reset-default-config" onClick="resetDefaultConfig()">Reset Default Config</button></p>

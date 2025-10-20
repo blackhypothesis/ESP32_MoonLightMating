@@ -120,6 +120,16 @@ function getVersion() {
     xhr.send();
 }
 
+function toggleCheckbox(element) {
+    if (element.checked) {
+        document.getElementById("config-enable-text").innerHTML = "Enabled";
+        console.log("config enabled");
+    } else {
+        document.getElementById("config-enable-text").innerHTML = "Disabled";
+        console.log("config disabled");
+    }
+}
+
 function getConfigStatus() {
     let xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function () {
@@ -186,29 +196,6 @@ function getClientStates() {
     }
     xhr.open("GET", "/getclientstates", true);
     xhr.send();
-}
-
-function setCurrentDateTime() {
-    let datetime = new Date();
-    let epochseconds = datetime.getTime()
-    epochseconds = epochseconds / 1000;
-    // UTC to GMT+1
-    epochseconds = epochseconds + 3600;
-    // Summertime
-    // epochseconds = epochseconds + 3600;
-    let xhr = new XMLHttpRequest();
-    xhr.open("GET", "/setdatetime?epochseconds=" + epochseconds, true);
-    xhr.send();
-}
-
-function toggleCheckbox(element) {
-    if (element.checked) {
-        document.getElementById("config-enable-text").innerHTML = "Enabled";
-        console.log("config enabled");
-    } else {
-        document.getElementById("config-enable-text").innerHTML = "Disabled";
-        console.log("config disabled");
-    }
 }
 
 function setScheduleConfig() {

@@ -1,6 +1,7 @@
-getHiveConfig()
-getWifiConfig()
-getConfigStatus();
+updateNavBarIP();
+getHiveConfig();
+getWifiConfig();
+getDateTime();
 
 function getHiveConfig() {
     let xhr = new XMLHttpRequest();
@@ -103,6 +104,32 @@ function resetDefaultConfig() {
     }
 }
 
+function setCurrentDateTime() {
+    let datetime = new Date();
+    let epochseconds = datetime.getTime()
+    epochseconds = epochseconds / 1000;
+    let utcOffset = document.getElementById("utc-offset").value;
+    // UTC offset
+    epochseconds = epochseconds + 3600 * utcOffset;
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET", "/setdatetime?epochseconds=" + epochseconds, true);
+    xhr.send();
+}
+
+function getDateTime() {
+    let xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            let myObj = JSON.parse(this.responseText);
+            console.log(myObj);
+            let datetime = myObj["datetime"];
+            document.getElementById("datetime").innerHTML = datetime;
+        }
+    }
+    xhr.open("GET", "/getdatetime", true);
+    xhr.send();
+}
+
 function ays() {
     let answer;
     if (confirm("Are you sure?") == true) {
@@ -111,4 +138,20 @@ function ays() {
         answer = false;
     }
     return answer;
+}
+
+function updateNavBarIP() {
+    let xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            let msg = JSON.parse(this.responseText);
+            console.log(msg);
+            let dip = msg["drone_ip"];
+
+            document.getElementById("drones-url").setAttribute("href", "http://" + dip + "/drones.html");
+            document.getElementById("queens-url").setAttribute("href", "http://" + dip + "/queenshives.html");
+        }
+    }
+    xhr.open("GET", "/getconfigstatus", true);
+    xhr.send();
 }
