@@ -424,6 +424,7 @@ void webSocketNotifyClients(void *pvParameters) {
 void scheduleMotorCommands(void *pvParameters) {
   int steps, direction;
   int config_enable = 0;
+  Serial.printf("%s Task scheduleMotorCommands started\n", getDateTime().c_str());
 
   while(true) {
     if (xSemaphoreTake(schedule_motor_mutex, 10) == pdTRUE) {
@@ -491,7 +492,7 @@ void controlStepperMotor(void *pvParameters) {
     AccelStepper(AccelStepper::HALF4WIRE, mc->in1, mc->in2, mc->in3, mc->in4);
   stepper.setMaxSpeed(mc->max_speed);
   stepper.setAcceleration(mc->acceleration);
-
+  Serial.printf("%s Task controlStepperMotor started\n", getDateTime().c_str());
 
   while(true) {
     // if motor is idle, try to get new command from queue
@@ -566,6 +567,7 @@ void controlStepperMotor(void *pvParameters) {
 void queenHiveUpdate(void *pvParameters) {
   const String CONFIG_PATH_NAME = "/getconfigstatusclient?mac=" + mac_address;
   WiFiClient wifi;
+  Serial.printf("%s Task queenHiveUpdate started\n", getDateTime().c_str());
 
   while(true) {
     HttpClient client = HttpClient(wifi, wifi_config.ip.c_str(), 80);
@@ -617,6 +619,8 @@ void queenHiveUpdate(void *pvParameters) {
 // --------------------------------------------------------- 
 void sendWifiConfigToClients(void *pvParameters) {
   WiFiClient wifi;
+  Serial.printf("%s Task sendWifiConfigToClients started\n", getDateTime().c_str());
+
 
   while(true) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
