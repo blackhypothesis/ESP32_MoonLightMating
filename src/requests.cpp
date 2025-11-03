@@ -199,3 +199,15 @@ void requestGetClientStates(AsyncWebServerRequest *request) {
 void requestScanWifi(AsyncWebServerRequest *request) {
   scanWiFi();
 }
+
+void requestSecondsSinceBoot(AsyncWebServerRequest *request) {
+  int64_t uptimeSeconds = esp_timer_get_time() / 1000000;
+  JsonDocument ssb;
+  ssb["seconds_since_boot"] = (int)uptimeSeconds;
+  char serialized_ssb[64];
+  serializeJson(ssb, serialized_ssb);
+  Serial.printf("%s, secondssinceboot: %s\n", getDateTime().c_str(), serialized_ssb);
+  request->send(200, "application/json", String(serialized_ssb));
+  set_last_action_to_now();
+}
+

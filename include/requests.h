@@ -2,7 +2,6 @@
 #define REQUESTS_H
 
 #include <ESPAsyncWebServer.h>
-// #include <ArduinoJson.h>
 #include "parameters.h"
 
 void requestRootURL(AsyncWebServerRequest *request);
@@ -18,5 +17,6 @@ void requestSetDateTime(AsyncWebServerRequest *request);
 void requestSetScheduleConfig(AsyncWebServerRequest *request);
 void requestGetClientStates(AsyncWebServerRequest *request);
 void requestScanWifi(AsyncWebServerRequest *request);
+void requestSecondsSinceBoot(AsyncWebServerRequest *request);
 
 #endif
