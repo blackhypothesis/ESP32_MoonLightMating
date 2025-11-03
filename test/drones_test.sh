@@ -9,27 +9,27 @@ DRONES_IP="172.23.1.222"
 while :
 do
     echo "setdatetime"
-    curl -X GET http://$DRONES_IP:/setdatetime?epochseconds=$(date +%s)
+    curl -X GET http://$DRONES_IP/setdatetime?epochseconds=$(date +%s)
     echo
     sleep 2
 
     echo "getdatetime"
-    curl -X GET http://$DRONES_IP:/getdatetime
+    curl -X GET http://$DRONES_IP/getdatetime
     echo
     sleep 2
 
     echo "getversion"
-    curl -X GET http://$DRONES_IP:/getversion
+    curl -X GET http://$DRONES_IP/getversion
     echo
     sleep 2
 
     echo "gethiveconfig"
-    curl -X GET http://$DRONES_IP:/gethiveconfig
+    curl -X GET http://$DRONES_IP/gethiveconfig
     echo
     sleep 2
 
     echo "getwificonfig"
-    curl -X GET http://$DRONES_IP:/getwificonfig
+    curl -X GET http://$DRONES_IP/getwificonfig
     echo
     sleep 2
 
