@@ -51,6 +51,11 @@ do
     echo "setscheduleconfig"
     curl -X GET "http://$DRONES_IP/setscheduleconfig?hour_open=15&minute_open=30&hour_close=15&minute_close=45&queens_delay=35&config_enable=1"
     echo
+    sleep 2
+
+    echo "secondssinceboot"
+    curl -X GET http://$DRONES_IP/secondssinceboot
+    echo
     sleep $(wait_seconds)
 done
 
