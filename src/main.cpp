@@ -126,7 +126,6 @@ void initApp(void *pvParameters) {
   server.on("/getclientstates", HTTP_GET, requestGetClientStates);
   server.on("/scanwifi", HTTP_GET, requestScanWifi);
   server.on("/secondssinceboot", HTTP_GET, requestSecondsSinceBoot);
-  server.on("/gettasklist", HTTP_GET, requestGetTaskList);
 
   server.serveStatic("/", SPIFFS, "/");
 
