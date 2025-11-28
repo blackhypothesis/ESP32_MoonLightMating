@@ -493,7 +493,7 @@ void controlStepperMotor(void *pvParameters) {
     AccelStepper(AccelStepper::HALF4WIRE, mc->in1, mc->in2, mc->in3, mc->in4);
   stepper.setMaxSpeed(mc->max_speed);
   stepper.setAcceleration(mc->acceleration);
-  Serial.printf("%s Task controlStepperMotor started\n", getDateTime().c_str());
+  Serial.printf("%s Task controlStepperMotor started: motor_nr: %d\n", getDateTime().c_str(), mc->motor_nr);
 
   while(true) {
     // if motor is idle, try to get new command from queue

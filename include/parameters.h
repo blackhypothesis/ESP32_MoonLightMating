@@ -37,6 +37,9 @@ typedef struct hive_cfg
 {
     int hive_type;
     int wifi_mode;
+    int offset_open_door;
+    int offset_close_door;
+    int photoresistor_edge_delta;
 } hive_cfg_t;
 
 extern hive_cfg_t hive_config;
@@ -77,7 +80,11 @@ extern const int IN8;
 
 // to initialize motor
 extern const int MAX_MOTOR;
-extern const int MOTOR_STEPS_OPEN_CLOSE;
+extern const int MOTOR_STEPS_OPEN_CLOSE; // obsolete
+
+// door open / close
+extern const int OPEN_DOOR;
+extern const int CLOSE_DOOR;
 
 typedef struct motor_init
 {

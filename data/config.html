@@ -26,32 +26,44 @@
       <div class="card">
         <table>
           <tr>
-            <td><label for="hivetype">Hive Type</label></td>
+            <td><label for="hive-type">Hive Type</label></td>
             <td>
               <label class="switch">
-                <input type="checkbox" onchange="toggleHiveType(this)" id="cb-hivetype">
+                <input type="checkbox" onchange="togglehivetype(this)" id="cb-hive-type">
                 <span class="slider"></span>
               </label>
             </td>
-            <td id="config-hivetype-text" value=""></td>
+            <td id="config-hive-type-text" value=""></td>
           </tr>
           <tr>
-            <td><label for="wifimode">WiFi Mode</label></td>
+            <td><label for="wifi-mode">WiFi Mode</label></td>
             <td>
               <label class="switch">
-                <input type="checkbox" onchange="toggleWifiMode(this)" id="cb-wifimode">
+                <input type="checkbox" onchange="togglewifimode(this)" id="cb-wifi-mode">
                 <span class="slider"></span>
               </label>
             </td>
-            <td id="config-wifimode-text" value=""></td>
+            <td id="config-wifi-mode-text" value=""></td>
           </tr>
         </table>
       </div>
       <div class="card">
         <form action="/" method="POST" accept-charset="utf-8">
-          <input id='hivetype' type='hidden' name="hivetype" value="">
-          <input id='wifimode' type='hidden' name="wifimode" value="">
+          <input id='hive-type' type='hidden' name="hive-type" value="">
+          <input id='wifi-mode' type='hidden' name="wifi-mode" value="">
           <table>
+            <tr>
+              <td>Offset open door</td>
+              <td><input type="number" id="offset-open-door" name="offset-open-door" min="-1024" max="1024" value="0"></td>
+            </tr>
+            <tr>
+              <td>Offset close door</td>
+              <td><input type="number" id="offset-close-door" name="offset-close-door" min="-1024" max="1024" value="0"></td>
+            </tr>
+            <tr>
+              <td>PR edge delta</td>
+              <td><input type="number" id="photoresistor-edge-delta" name="photoresistor-edge-delta" min="-1024" max="1024" value="0"></td>
+            </tr>
             <tr>
               <td><label for="ssid">SSID</label></td>
               <td><input type="text" id ="ssid" name="ssid" value=""></td>
@@ -95,6 +107,14 @@
       </div>
       <div class="card">
         <p><button id="reset-default-config" onClick="resetDefaultConfig()">Reset Default Config</button></p>
+      </div>
+      <div class="card">
+        <table>
+          <tr>
+            <td>Uptime [s]</td>
+            <td id="uptime"></td>
+          </tr>
+        </table>
       </div>
     </div>
   </div>

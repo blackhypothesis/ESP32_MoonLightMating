@@ -15,11 +15,20 @@ void requestSaveHiveWifiConfig(AsyncWebServerRequest *request) {
     const AsyncWebParameter* p = request->getParam(i);
     if (xSemaphoreTake(config_mutex, 200) == pdTRUE) {
       if(p->isPost()){
-        if (p->name() == "hivetype") {
+        if (p->name() == "hive-type") {
           hive_config.hive_type = p->value().toInt();
         }
-        if (p->name() == "wifimode") {
+        if (p->name() == "wifi-mode") {
           hive_config.wifi_mode = p->value().toInt();
+        }
+        if (p->name() == "offset-open-door") {
+          hive_config.offset_open_door = p->value().toInt();
+        }
+        if (p->name() == "offset-close-door") {
+          hive_config.offset_close_door = p->value().toInt();
+        }
+        if (p->name() == "photoresistor-edge-delta") {
+          hive_config.photoresistor_edge_delta = p->value().toInt();
         }
         if (p->name() == "ssid") {
           wifi_config.ssid = p->value().c_str();
@@ -38,9 +47,9 @@ void requestSaveHiveWifiConfig(AsyncWebServerRequest *request) {
         }
       }
       xSemaphoreGive(config_mutex);
-      Serial.printf("%s get wifi config from POST request.\n", getDateTime().c_str());
+      Serial.printf("%s get hive/wifi config from POST request.\n", getDateTime().c_str());
     } else {
-      Serial.printf("%s cannot get wifi config from POST request: mutex locked.\n", getDateTime().c_str());
+      Serial.printf("%s cannot get hive/wifi config from POST request: mutex locked.\n", getDateTime().c_str());
     }
     Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
   }
@@ -76,8 +85,11 @@ void requestGetDateTime(AsyncWebServerRequest *request) {
 void requestGetHiveConfig(AsyncWebServerRequest *request) {
   if (xSemaphoreTake(config_mutex, 200) == pdTRUE) {
     JsonDocument hc;
-    hc["hivetype"] = hive_config.hive_type;
-    hc["wifimode"] = hive_config.wifi_mode;
+    hc["hive_type"] = hive_config.hive_type;
+    hc["wifi_mode"] = hive_config.wifi_mode;
+    hc["offset_open_door"] = hive_config.offset_open_door;
+    hc["offset_close_door"] = hive_config.offset_close_door;
+    hc["photoresistor_edge_delta"] = hive_config.photoresistor_edge_delta;
     char serialized_hc[128];
     serializeJson(hc, serialized_hc);
     request-> send(200, "application/json", String(serialized_hc));

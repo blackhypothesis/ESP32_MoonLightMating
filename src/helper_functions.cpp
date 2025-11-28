@@ -217,9 +217,15 @@ void readHiveConfigFile() {
   JsonObject documentRoot = cfg_json.as<JsonObject>();
   int hive_type = documentRoot["hive_type"];
   int wifi_mode = documentRoot["wifi_mode"];
+  int offset_open_door = documentRoot["offset_open_door"];
+  int offset_close_door = documentRoot["offset_close_door"];
+  int photoresistor_edge_delta = documentRoot["photoresistor_edge_delta"];
   if (xSemaphoreTake(config_mutex, 200) == pdTRUE) {
     hive_config.hive_type = hive_type;
     hive_config.wifi_mode = wifi_mode;
+    hive_config.offset_open_door = offset_open_door;
+    hive_config.offset_close_door = offset_close_door;
+    hive_config.photoresistor_edge_delta = photoresistor_edge_delta;
     xSemaphoreGive(config_mutex);
     Serial.printf("%s read Hive config from file.\n", getDateTime().c_str());
   } else {
@@ -232,6 +238,9 @@ void writeHiveConfigFile() {
   if (xSemaphoreTake(config_mutex, 200) == pdTRUE) {
     h_config["hive_type"] = hive_config.hive_type;
     h_config["wifi_mode"] = hive_config.wifi_mode;
+    h_config["offset_open_door"] = hive_config.offset_open_door;
+    h_config["offset_close_door"] = hive_config.offset_close_door;
+    h_config["photoresistor_edge_delta"] = hive_config.photoresistor_edge_delta;
     xSemaphoreGive(config_mutex);
     Serial.printf("%s wrote Hive cnfig to file.\n", getDateTime().c_str());
   } else {
@@ -294,6 +303,9 @@ String getHiveConfig() {
   JsonDocument hive_c;
   hive_c["hive_type"] = hive_config.hive_type;
   hive_c["wifi_mode"] = hive_config.wifi_mode;
+  hive_c["offset_open_door"] = hive_config.offset_open_door;
+  hive_c["offset_close_door"] = hive_config.offset_close_door;
+  hive_c["photoresistor_edge_delta"] = hive_config.photoresistor_edge_delta;
   char serialized_hive_c[128];
   serializeJson(hive_c, serialized_hive_c);
   return String(serialized_hive_c);
