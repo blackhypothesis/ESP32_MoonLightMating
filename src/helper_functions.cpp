@@ -220,12 +220,14 @@ void readHiveConfigFile() {
   int offset_open_door = documentRoot["offset_open_door"];
   int offset_close_door = documentRoot["offset_close_door"];
   int photoresistor_edge_delta = documentRoot["photoresistor_edge_delta"];
+  int photoresistor_read_interval_ms = documentRoot["photoresistor_read_interval_ms"];
   if (xSemaphoreTake(config_mutex, 200) == pdTRUE) {
     hive_config.hive_type = hive_type;
     hive_config.wifi_mode = wifi_mode;
     hive_config.offset_open_door = offset_open_door;
     hive_config.offset_close_door = offset_close_door;
     hive_config.photoresistor_edge_delta = photoresistor_edge_delta;
+    hive_config.photoresistor_read_interval_ms = photoresistor_read_interval_ms;
     xSemaphoreGive(config_mutex);
     Serial.printf("%s read Hive config from file.\n", getDateTime().c_str());
   } else {
@@ -241,6 +243,7 @@ void writeHiveConfigFile() {
     h_config["offset_open_door"] = hive_config.offset_open_door;
     h_config["offset_close_door"] = hive_config.offset_close_door;
     h_config["photoresistor_edge_delta"] = hive_config.photoresistor_edge_delta;
+    h_config["photoresistor_read_interval_ms"] = hive_config.photoresistor_read_interval_ms;
     xSemaphoreGive(config_mutex);
     Serial.printf("%s wrote Hive cnfig to file.\n", getDateTime().c_str());
   } else {

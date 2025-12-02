@@ -40,6 +40,7 @@ typedef struct hive_cfg
     int offset_open_door;
     int offset_close_door;
     int photoresistor_edge_delta;
+    int photoresistor_read_interval_ms;
 } hive_cfg_t;
 
 extern hive_cfg_t hive_config;
@@ -92,6 +93,10 @@ typedef struct motor_init
     int in1, in2, in3, in4;
     int max_speed;
     int acceleration;
+    int offset_open_door;
+    int offset_close_door;
+    int photoresistor_edge_delta;
+    int photoresistor_read_interval_ms;
 } motor_init_t;
 
 // commands for motor
@@ -101,7 +106,7 @@ typedef struct motor_cmd
     int direction;
 } motor_cmd_t;
 
-extern const motor_init_t motor_init[];
+extern motor_init_t motor_init[];
 extern motor_cmd_t motor_cmd[];
 
 // end switches (analog)

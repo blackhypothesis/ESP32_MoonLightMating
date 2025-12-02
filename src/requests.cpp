@@ -30,6 +30,9 @@ void requestSaveHiveWifiConfig(AsyncWebServerRequest *request) {
         if (p->name() == "photoresistor-edge-delta") {
           hive_config.photoresistor_edge_delta = p->value().toInt();
         }
+        if (p->name() == "photoresistor-read-interval-ms") {
+          hive_config.photoresistor_read_interval_ms = p->value().toInt();
+        }
         if (p->name() == "ssid") {
           wifi_config.ssid = p->value().c_str();
         }
@@ -61,8 +64,7 @@ void requestSaveHiveWifiConfig(AsyncWebServerRequest *request) {
     state_client[i].wifi_config_sent = 0;
     }
   }
-  request->send(200, "text/plain", "Done. ESP will be restarted to connect with the WiFi settings. New IP address: " + wifi_config.ip);
-  ESP.restart();
+  request->send(200, "text/plain", "Done. Reboot ESP, if WiFi settings have changed. IP address: " + wifi_config.ip);
 }
 
 void requestGetVersion(AsyncWebServerRequest *request) {
@@ -90,7 +92,9 @@ void requestGetHiveConfig(AsyncWebServerRequest *request) {
     hc["offset_open_door"] = hive_config.offset_open_door;
     hc["offset_close_door"] = hive_config.offset_close_door;
     hc["photoresistor_edge_delta"] = hive_config.photoresistor_edge_delta;
-    char serialized_hc[128];
+    hc["photoresistor_read_interval_ms"] = hive_config.photoresistor_read_interval_ms;
+
+    char serialized_hc[256];
     serializeJson(hc, serialized_hc);
     request-> send(200, "application/json", String(serialized_hc));
     set_last_action_to_now();
@@ -123,6 +127,11 @@ void requestGetWifiConfig(AsyncWebServerRequest *request) {
 void requestResetDefaultConfig(AsyncWebServerRequest *request) {
   Serial.printf("%s /resetdefaultconfig %s\n", getDateTime().c_str());
   resetDefaultConfigs();
+  ESP.restart();
+}
+
+void requestReboot(AsyncWebServerRequest *request) {
+  Serial.printf("%s /reboot %s\n", getDateTime().c_str());
   ESP.restart();
 }
 

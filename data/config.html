@@ -54,15 +54,19 @@
           <table>
             <tr>
               <td>Offset open door</td>
-              <td><input type="number" id="offset-open-door" name="offset-open-door" min="-1024" max="1024" value="0"></td>
+              <td><input type="number" id="offset-open-door" name="offset-open-door" min="-1000" max="1000" value="0"></td>
             </tr>
             <tr>
               <td>Offset close door</td>
-              <td><input type="number" id="offset-close-door" name="offset-close-door" min="-1024" max="1024" value="0"></td>
+              <td><input type="number" id="offset-close-door" name="offset-close-door" min="-1000" max="1000" value="0"></td>
             </tr>
             <tr>
               <td>PR edge delta</td>
-              <td><input type="number" id="photoresistor-edge-delta" name="photoresistor-edge-delta" min="-1024" max="1024" value="0"></td>
+              <td><input type="number" id="photoresistor-edge-delta" name="photoresistor-edge-delta" min="-1000" max="1000" step="50" value="0"></td>
+            </tr>
+            <tr>
+              <td>PR read interval [ms]</td>
+              <td><input type="number" id="photoresistor-read-interval-ms" name="photoresistor-read-interval-ms" min="50" max="1000" step="50" value="0"></td>
             </tr>
             <tr>
               <td><label for="ssid">SSID</label></td>
@@ -107,6 +111,9 @@
       </div>
       <div class="card">
         <p><button id="reset-default-config" onClick="resetDefaultConfig()">Reset Default Config</button></p>
+      </div>
+      <div class="card">
+        <p><button id="reboot" onClick="reboot()">Reboot</button></p>
       </div>
       <div class="card">
         <table>

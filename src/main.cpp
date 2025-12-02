@@ -87,6 +87,13 @@ void initApp(void *pvParameters) {
   for (int i = 0; i < MAX_MOTOR; i++) {
     motor_cmd_queue[i] = xQueueCreate(5, sizeof(motor_cmd_t));
   }
+  // initialize motor init parameters
+  for (int i = 0; i < MAX_MOTOR; i++) {
+    motor_init[i].offset_open_door = hive_config.offset_open_door;
+    motor_init[i].offset_close_door = hive_config.offset_close_door;
+    motor_init[i].photoresistor_edge_delta = hive_config.photoresistor_edge_delta;
+    motor_init[i].photoresistor_read_interval_ms = hive_config.photoresistor_read_interval_ms;
+  }
   // initialize log queue
   log_queue = xQueueCreate(5, 100);
 
@@ -119,6 +126,7 @@ void initApp(void *pvParameters) {
   server.on("/gethiveconfig", HTTP_GET, requestGetHiveConfig);
   server.on("/getwificonfig", requestGetWifiConfig);
   server.on("/resetdefaultconfig", HTTP_GET, requestResetDefaultConfig);
+  server.on("/reboot", HTTP_GET, requestReboot);
   server.on("/getconfigstatus", HTTP_GET, requestGetConfigStatus);
   server.on("/getconfigstatusclient", HTTP_GET, requestGetConfigStatusClient);
   server.on("/setdatetime", HTTP_GET, requestSetDateTime);
@@ -488,7 +496,8 @@ void controlStepperMotor(void *pvParameters) {
   bool end_switch_first = true;
   TickType_t ticks;
 
-  Serial.printf("%s motor_init %d, %d, %d, %d, %d, %d, %d\n", getDateTime().c_str(), mc->motor_nr, mc->in1, mc->in2, mc->in3, mc->in4, mc->max_speed, mc->acceleration);
+  Serial.printf("%s motor_init %d, %d, %d, %d, %d, %d, %d, %d, %d, %d\n", getDateTime().c_str(),
+    mc->motor_nr, mc->in1, mc->in2, mc->in3, mc->in4, mc->max_speed, mc->acceleration, mc->offset_open_door, mc->offset_close_door, mc->photoresistor_edge_delta);
   AccelStepper stepper =
     AccelStepper(AccelStepper::HALF4WIRE, mc->in1, mc->in2, mc->in3, mc->in4);
   stepper.setMaxSpeed(mc->max_speed);
@@ -519,19 +528,19 @@ void controlStepperMotor(void *pvParameters) {
 
         while (stepper.distanceToGo() != 0) {
           // read end switch, every 200 ms
-          if ((xTaskGetTickCount() - ticks) / portTICK_PERIOD_MS > 500 && force_motor_stop == false) {
+          if ((xTaskGetTickCount() - ticks) / portTICK_PERIOD_MS > mc->photoresistor_read_interval_ms && force_motor_stop == false) {
             end_switch_current = analogRead(end_switch[mc->motor_nr]);
 
             if (end_switch_first) {
               end_switch_old = end_switch_current;
               end_switch_first = false;
             }
-            int end_switch_delta = abs(end_switch_current - end_switch_old);
+            int end_switch_delta = end_switch_current - end_switch_old;
             end_switch_old = end_switch_current;
             Serial.printf("%s End switch %d value = %d, delta = %d\n", getDateTime().c_str(), end_switch[mc->motor_nr], end_switch_current, end_switch_delta);
             // stop motor, if end switch is on
-            if (end_switch_delta > 400) {
-              Serial.printf("%s Stop motor: end_switch_delta = %d\n", getDateTime().c_str(), end_switch_delta);
+            if (abs(end_switch_delta) > mc->photoresistor_edge_delta) {
+              Serial.printf("%s Stop motor: photoresistor_edge_delta < end_switch_delta, %d < %d\n", getDateTime().c_str(), mc->photoresistor_edge_delta, end_switch_delta);
               stepper.stop();
               force_motor_stop = true;
             }

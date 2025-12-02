@@ -11,6 +11,7 @@ void requestGetDateTime(AsyncWebServerRequest *request);
 void requestGetHiveConfig(AsyncWebServerRequest *request);
 void requestGetWifiConfig(AsyncWebServerRequest *request);
 void requestResetDefaultConfig(AsyncWebServerRequest *request);
+void requestReboot(AsyncWebServerRequest *request);
 void requestGetConfigStatus(AsyncWebServerRequest *request);
 void requestGetConfigStatusClient(AsyncWebServerRequest *request);
 void requestSetDateTime(AsyncWebServerRequest *request);

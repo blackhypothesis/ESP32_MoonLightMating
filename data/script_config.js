@@ -18,6 +18,7 @@ function getHiveConfig() {
             let offset_open_door = msg["offset_open_door"];
             let offset_close_door = msg["offset_close_door"];
             let photoresistor_edge_delta = msg["photoresistor_edge_delta"];
+            let photoresistor_read_interval_ms = msg["photoresistor_read_interval_ms"]
 
             console.log("hive_type = " + hive_type + " wifi_mode = " + wifi_mode);
             if (hive_type == 0) {
@@ -44,6 +45,7 @@ function getHiveConfig() {
             document.getElementById("offset-open-door").value = offset_open_door;
             document.getElementById("offset-close-door").value = offset_close_door;
             document.getElementById("photoresistor-edge-delta").value = photoresistor_edge_delta;
+            document.getElementById("photoresistor-read-interval-ms").value = photoresistor_read_interval_ms;
         }
     }
     xhr.open("GET", "/gethiveconfig", true);
@@ -126,6 +128,16 @@ function resetDefaultConfig() {
         console.log("Reset to default config.")
         let xhr = new XMLHttpRequest();
         xhr.open("GET", "/resetdefaultconfig");
+        xhr.send();
+    }
+}
+
+function reboot() {
+    let ok = ays();
+    if (ok == true) {
+        console.log("Reboot.")
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", "/reboot");
         xhr.send();
     }
 }
