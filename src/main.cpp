@@ -453,8 +453,9 @@ void scheduleMotorCommands(void *pvParameters) {
       } else {
         steps = MOTOR_STEPS_OPEN_CLOSE;
         direction = 1;
-        motor_cmd[0] = {steps, direction};
-        motor_cmd[1] = {steps, direction};
+        for (int i = 0; i < MAX_MOTOR; i++) {
+          motor_cmd[1] = {steps, direction};
+        }
         for (int i = 0; i < MAX_MOTOR; i++) {
           if (xQueueSend(motor_cmd_queue[i], (void *) &motor_cmd[i], 1000) != pdTRUE) {
             Serial.printf("Queue %d full.\n", i);
