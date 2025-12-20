@@ -99,20 +99,25 @@ void initApp(void *pvParameters) {
 
   // initialize schedule motor commands task
   xTaskCreate(scheduleMotorCommands, "Schedule Motor Commands", 2048, NULL, 3, NULL);
+  Serial.printf("%s Created Task: Schedule Motor Commands\n", getDateTime().c_str());
 
   // initialize motor tasks
-  const char *task_name[] = {"Control Stepper Motor 1", "Control Stepper Motor 2"};
+  const char *task_name[] = {"Control Stepper Motor 0", "Control Stepper Motor 1"};
   for (int i = 0; i < MAX_MOTOR; i++) {
     xTaskCreate(controlStepperMotor, task_name[i], 2048, (void *) &motor_init[i], 4, NULL);
+    Serial.printf("%s Created Task: %s\n", getDateTime().c_str(), task_name[i]);
+
   }
 
   // initialize drone hive task
   if (hive_config.hive_type == HIVE_DRONES) {
-    xTaskCreate(sendWifiConfigToClients, "Send Wifi config", 4096, NULL, 2, NULL);
+    xTaskCreate(sendWifiConfigToClients, "Send Wifi Config", 4096, NULL, 2, NULL);
+    Serial.printf("%s Created Task: Send Wifi Config\n", getDateTime().c_str());
   }
   // initialize queen hive update task
   if (hive_config.hive_type == HIVE_QUEENS) {
     xTaskCreate(queenHiveUpdate, "Queen Hive Update", 4096, NULL, 2, NULL);
+    Serial.printf("%s Created Task: Queen Hive Update\n", getDateTime().c_str());
   }
 
   // Webserver: initialize
@@ -384,14 +389,14 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     else {
       const int steps = control_motor["steps"];
       const int direction = control_motor["direction"];
-      Serial.printf("steps = %d, direction = %d\n", steps, direction);
+      Serial.printf("%s handleWebSocketMessage: steps = %d, direction = %d\n", getDateTime().c_str(), direction);
       for (int i = 0; i < MAX_MOTOR; i++) {
         motor_cmd[i] = {steps, direction};
       }
 
       for (int i = 0; i < MAX_MOTOR; i++) {
         if (xQueueSend(motor_cmd_queue[i], (void *) &motor_cmd[i], 1000) != pdTRUE) {
-          Serial.printf("Queue %d full.\n", i);
+          Serial.printf("%s handleWebSocketMessage: Queue %d full.\n", getDateTime().c_str(), i);
         }
       }
     }
@@ -454,7 +459,7 @@ void scheduleMotorCommands(void *pvParameters) {
         steps = MOTOR_STEPS_OPEN_CLOSE;
         direction = 1;
         for (int i = 0; i < MAX_MOTOR; i++) {
-          motor_cmd[1] = {steps, direction};
+          motor_cmd[i] = {steps, direction};
         }
         for (int i = 0; i < MAX_MOTOR; i++) {
           if (xQueueSend(motor_cmd_queue[i], (void *) &motor_cmd[i], 1000) != pdTRUE) {
@@ -471,8 +476,9 @@ void scheduleMotorCommands(void *pvParameters) {
       } else {
         steps = MOTOR_STEPS_OPEN_CLOSE;
         direction = -1;
-        motor_cmd[0] = {steps, direction};
-        motor_cmd[1] = {steps, direction};
+        for (int i = 0; i < MAX_MOTOR; i++) {
+          motor_cmd[i] = {steps, direction};
+        }
         for (int i = 0; i < MAX_MOTOR; i++) {
           if (xQueueSend(motor_cmd_queue[i], (void *) &motor_cmd[i], 1000) != pdTRUE) {
             Serial.printf("Queue %d full.\n", i);
