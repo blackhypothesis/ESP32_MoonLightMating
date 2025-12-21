@@ -65,7 +65,7 @@ extern const int WAKEUP_BEFORE_MOTOR_MOVE_SECONDS;
 
 // Interrupt
 extern const int INTERRUPT_PIN;
-extern volatile bool buttonPressed;
+extern volatile bool resetButtonPressed;
 
 // Motor config
 // GPIOs for motors

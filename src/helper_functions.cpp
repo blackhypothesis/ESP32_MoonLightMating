@@ -174,7 +174,8 @@ String readFile(fs::FS &fs, const char * path) {
 
   String fileContent;
   while(file.available()){
-    fileContent = file.readStringUntil('\n');
+    // fileContent = file.readStringUntil('\n');
+    fileContent = file.readString();
     break;
   }
   file.close();
@@ -250,7 +251,7 @@ void writeHiveConfigFile() {
     Serial.printf("%s cannot write Hive cnfig file: mutex locked.\n", getDateTime().c_str());
   }
   char serialized_h_config[512];
-  serializeJson(h_config, serialized_h_config);
+  serializeJsonPretty(h_config, serialized_h_config);
   Serial.printf("Save Hive config: %s\n", serialized_h_config);
   writeFile(SPIFFS, HIVE_CONFIG_FILE, serialized_h_config);
 }
@@ -297,7 +298,7 @@ void writeWifiConfigFile() {
     Serial.printf("%s cannot write WiFi cnfig file: mutex locked.\n", getDateTime().c_str());
   }
   char serialized_w_config[512];
-  serializeJson(w_config, serialized_w_config);
+  serializeJsonPretty(w_config, serialized_w_config);
   Serial.printf("Save WiFi config: %s\n", serialized_w_config);
   writeFile(SPIFFS, WIFI_CONFIG_FILE, serialized_w_config);
 }
@@ -328,7 +329,7 @@ String getWifiConfig() {
 
 // Interrupt Service Routine (ISR)
 void IRAM_ATTR handleButtonPress() {
-  buttonPressed = true;
+  resetButtonPressed = true;
 }
 
 void interruptFunction() {

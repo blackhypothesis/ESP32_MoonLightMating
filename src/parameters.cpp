@@ -1,6 +1,6 @@
 #include "parameters.h"
 
-const String VERSION = "0.18.9";
+const String VERSION = "0.18.11";
 
 // create mutexes
 SemaphoreHandle_t run_motor_mutex = xSemaphoreCreateMutex();
@@ -42,7 +42,7 @@ const int WAKEUP_BEFORE_MOTOR_MOVE_SECONDS = 30;
 
 // Interrupt
 const int INTERRUPT_PIN = 27;
-volatile bool buttonPressed = false;
+volatile bool resetButtonPressed = false;
 
 // Motor config
 // GPIOs for motors

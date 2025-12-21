@@ -61,7 +61,7 @@ void initApp(void *pvParameters) {
     Serial.printf("%s WiFi Mode: STA.\n", getDateTime().c_str());
     if (initWiFi() == false) {
       Serial.printf("%s Unable to connect to SSID %s.\n", getDateTime().c_str(), wifi_config.ssid);
-      if (buttonPressed == true) {
+      if (resetButtonPressed == true) {
         Serial.printf("%s during Wifi setup, ...\n", getDateTime().c_str());
         interruptFunction();
       } else {
@@ -204,7 +204,7 @@ void initApp(void *pvParameters) {
       set_last_action_to_now();
     }
 
-    if (buttonPressed == true) {
+    if (resetButtonPressed == true) {
       Serial.printf("%s in while loop, ...\n", getDateTime().c_str());
       interruptFunction();
     }
@@ -396,7 +396,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
 
       for (int i = 0; i < MAX_MOTOR; i++) {
         if (xQueueSend(motor_cmd_queue[i], (void *) &motor_cmd[i], 1000) != pdTRUE) {
-          Serial.printf("%s handleWebSocketMessage: Queue %d full.\n", getDateTime().c_str(), i);
+          Serial.printf("%s Queue %d full.\n", getDateTime().c_str(), i);
         }
       }
     }

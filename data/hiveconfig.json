@@ -1,1 +1,8 @@
-{"hive_type":0,"wifi_mode":1,"offset_open_door":0,"offset_close_door":0,"photoresistor_edge_delta":300,"photoresistor_read_interval_ms":400}
+{
+    "hive_type": 0,
+    "wifi_mode": 1,
+    "offset_open_door": 0,
+    "offset_close_door": 0,
+    "photoresistor_edge_delta": 300,
+    "photoresistor_read_interval_ms": 400
+}
