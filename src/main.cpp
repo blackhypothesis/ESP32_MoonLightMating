@@ -390,15 +390,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       const int steps = control_motor["steps"];
       const int direction = control_motor["direction"];
       Serial.printf("%s handleWebSocketMessage: steps = %d, direction = %d\n", getDateTime().c_str(), direction);
-      for (int i = 0; i < MAX_MOTOR; i++) {
-        motor_cmd[i] = {steps, direction};
-      }
-
-      for (int i = 0; i < MAX_MOTOR; i++) {
-        if (xQueueSend(motor_cmd_queue[i], (void *) &motor_cmd[i], 1000) != pdTRUE) {
-          Serial.printf("%s Queue %d full.\n", getDateTime().c_str(), i);
-        }
-      }
+      queueMotorCommand(steps, direction);
     }
   }
 }
@@ -458,14 +450,7 @@ void scheduleMotorCommands(void *pvParameters) {
       } else {
         steps = MOTOR_STEPS_OPEN_CLOSE;
         direction = 1;
-        for (int i = 0; i < MAX_MOTOR; i++) {
-          motor_cmd[i] = {steps, direction};
-        }
-        for (int i = 0; i < MAX_MOTOR; i++) {
-          if (xQueueSend(motor_cmd_queue[i], (void *) &motor_cmd[i], 1000) != pdTRUE) {
-            Serial.printf("Queue %d full.\n", i);
-          }
-        }
+        queueMotorCommand(steps, direction);
       }
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
@@ -476,14 +461,7 @@ void scheduleMotorCommands(void *pvParameters) {
       } else {
         steps = MOTOR_STEPS_OPEN_CLOSE;
         direction = -1;
-        for (int i = 0; i < MAX_MOTOR; i++) {
-          motor_cmd[i] = {steps, direction};
-        }
-        for (int i = 0; i < MAX_MOTOR; i++) {
-          if (xQueueSend(motor_cmd_queue[i], (void *) &motor_cmd[i], 1000) != pdTRUE) {
-            Serial.printf("Queue %d full.\n", i);
-          }
-        }
+        queueMotorCommand(steps, direction);
       }
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
@@ -669,6 +647,18 @@ void sendWifiConfigToClients(void *pvParameters) {
     }
     set_last_action_to_now();
     vTaskDelay(QUEENS_HIVE_UPDATE_SECONDS * 1000 / portTICK_PERIOD_MS);
+  }
+}
+
+void queueMotorCommand(const int steps, const int direction) {
+  for (int i = 0; i < MAX_MOTOR; i++) {
+    motor_cmd[i] = {steps, direction};
+  }
+
+  for (int i = 0; i < MAX_MOTOR; i++) {
+    if (xQueueSend(motor_cmd_queue[i], (void *) &motor_cmd[i], 1000) != pdTRUE) {
+      Serial.printf("%s Queue %d full.\n", getDateTime().c_str(), i);
+    }
   }
 }
 
