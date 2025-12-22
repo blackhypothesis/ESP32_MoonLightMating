@@ -94,7 +94,25 @@
           <table>
             <tr>
               <td>
-                <input type="radio" id="CW" name="command" value="1" checked>
+                <input type="radio" id="MINIT" name="command" value="4" checked>
+                <label for="CW">Motor Init</label>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <input type="radio" id="DOOROPEN" name="command" value="2">
+                <label for="CW">Door Open</label>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <input type="radio" id="DOORCLOSE" name="command" value="3">
+                <label for="CW">Door Close</label>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <input type="radio" id="CW" name="command" value="1">
                 <label for="CW">Clockwise</label>
               </td>
             </tr>
@@ -104,17 +122,11 @@
                 <label for="CW">Anticlockwise</label>
               </td>
             </tr>
-            <tr>
-              <td>
-                <input type="radio" id="MINIT" name="command" value="4">
-                <label for="CW">Motor Init</label>
-              </td>
-            </tr>
           </table>
           <table>
             <tr>
               <td><label for="steps">Steps:</label></td>
-              <td><input type="number" id="steps" step="100" name="steps"></td>
+              <td><input type="number" id="steps" step="100" name="steps" value="300"></td>
             </tr>
           </table>
         </form>

@@ -13,6 +13,7 @@
 #include "parameters.h"
 #include "helper_functions.h"
 #include "requests.h"
+#include "motor_control.h"
 
 
 void set_last_action_to_now();
@@ -35,8 +36,6 @@ void onEvent(AsyncWebSocket *, AsyncWebSocketClient *, AwsEventType, void *, uin
 void initWebSocket();
 void webSocketNotifyClients(void *);
 
-void scheduleMotorCommands(void *);
-void controlStepperMotor(void *);
 void queenHiveUpdate(void *);
 void sendWifiConfigToClients(void *);
 void queueMotorControl(const int, const MotorCommand);

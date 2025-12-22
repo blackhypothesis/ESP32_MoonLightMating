@@ -111,6 +111,12 @@ enum MotorCommand {
     MOTOR_INIT
 };
 
+enum QueryEndSwitch {
+    NONE,
+    POSITIVE,
+    NEGATIVE
+};
+
 typedef struct motor_control
 {
     int steps;
