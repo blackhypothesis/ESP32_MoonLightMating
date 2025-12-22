@@ -494,7 +494,7 @@ void controlStepperMotor(void *pvParameters) {
     // if motor is idle, try to get new command from queue
     if (stepper.distanceToGo() == 0) {
       if (xQueueReceive(motor_cmd_queue[mc->motor_nr], (void *) &cmd, 1000) == pdTRUE) {
-        Serial.printf("%s Motor %d: received cmd: steps: %d; direction: %d\n", getDateTime().c_str(), mc->motor_nr, cmd.steps, cmd.command);
+        Serial.printf("%s Motor %d: received cmd: steps: %d; command: %d\n", getDateTime().c_str(), mc->motor_nr, cmd.steps, cmd.command);
         set_last_action_to_now();
         stepper.move(cmd.steps * cmd.command);
       }
@@ -508,7 +508,7 @@ void controlStepperMotor(void *pvParameters) {
         JsonDocument motor_status;
         char serialized_motor_status[64];
         motor_status["motor_nr"] = mc->motor_nr;
-        motor_status["direction"] = cmd.command;
+        motor_status["command"] = cmd.command;
         serializeJson(motor_status, serialized_motor_status);
         notifyClients(String(serialized_motor_status));
 
@@ -543,10 +543,10 @@ void controlStepperMotor(void *pvParameters) {
         xSemaphoreGive(run_motor_mutex);
         force_motor_stop = false;
 
-        motor_status["direction"] = 0;
+        motor_status["command"] = 0;
         serializeJson(motor_status, serialized_motor_status);
         notifyClients(String(serialized_motor_status));
-        Serial.printf("%s Motor %d: executed cmd: steps: %d; direction: %d\n", getDateTime().c_str(), mc->motor_nr, cmd.steps, cmd.command);
+        Serial.printf("%s Motor %d: executed cmd: steps: %d; command: %d\n", getDateTime().c_str(), mc->motor_nr, cmd.steps, cmd.command);
         set_last_action_to_now();
       }
       else {

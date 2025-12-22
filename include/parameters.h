@@ -102,10 +102,11 @@ typedef struct motor_init
 // commands for motor
 enum MotorCommand {
     RUN_ANTICLOCKWISE = -1,
-    MOTOR_INIT,
+    MOTOR_IDLE,
     RUN_CLOCKWISE,
     DOOR_OPEN,
-    DOOR_CLOSE
+    DOOR_CLOSE,
+    MOTOR_INIT
 };
 
 typedef struct motor_control
