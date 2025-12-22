@@ -31,20 +31,16 @@ function onClose(event) {
 }
 
 function onMessage(event) {
+    let commands = {"-1": "Anticlockwise", "0": "Motor idle", "1": "Clockwise", "2": "Door Open", "3": "Door Close", "4": "Motor Init",}
     console.log(event.data);
     let msg = JSON.parse(event.data);
     command = msg["command"];
     let motor_element = "motor-" + msg["motor_nr"] + "-state";
-    if (command == 0) {
-        document.getElementById(motor_element).innerHTML = "Motor stopped."
-        document.getElementById(motor_element).style.color = "red";
-    }
-    else if (command == 1) {
-        document.getElementById(motor_element).innerHTML = "Clockwise.";
+    
+    document.getElementById(motor_element).innerHTML = commands[command]
+    if (commands[command] == 0) {
         document.getElementById(motor_element).style.color = "green";
-    }
-    else if (command == -1) {
-        document.getElementById(motor_element).innerHTML = "Anticlockwise.";
+    } else {
         document.getElementById(motor_element).style.color = "blue";
     }
 }
