@@ -49,6 +49,7 @@ void scheduleMotorCommands(void *pvParameters) {
 // Task: control stepper motors
 // ---------------------------------------------------------
 void controlStepperMotor(void *pvParameters) {
+  UBaseType_t uxHighWaterMark;
   const motor_init_t *mc = (motor_init_t *) pvParameters;
   motor_control_t cmd;
   bool res;
@@ -62,6 +63,8 @@ void controlStepperMotor(void *pvParameters) {
   Serial.printf("%s Task controlStepperMotor started: motor_nr: %d\n", getDateTime().c_str(), mc->motor_nr);
 
   while(true) {
+    uxHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
+    Serial.printf("%s uxHighWaterMark %d\n", getDateTime().c_str(), uxHighWaterMark);
     // if motor is idle, try to get new command from queue ...
     if (stepper.distanceToGo() == 0) {
       if (xSemaphoreTake(run_motor_mutex, 1000) == pdTRUE) {
@@ -148,6 +151,7 @@ void controlStepperMotor(void *pvParameters) {
         Serial.printf("%s Motor %d: other motor is currently running, waiting, ...\n", getDateTime().c_str(), mc->motor_nr);
       }
     }
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
 

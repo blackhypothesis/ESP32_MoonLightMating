@@ -104,7 +104,7 @@ void initApp(void *pvParameters) {
   // initialize motor tasks
   const char *task_name[] = {"Control Stepper Motor 0", "Control Stepper Motor 1"};
   for (int i = 0; i < MAX_MOTOR; i++) {
-    xTaskCreate(controlStepperMotor, task_name[i], 2048, (void *) &motor_init[i], 4, NULL);
+    xTaskCreate(controlStepperMotor, task_name[i], 4096, (void *) &motor_init[i], 4, NULL);
     Serial.printf("%s Created Task: %s\n", getDateTime().c_str(), task_name[i]);
 
   }
