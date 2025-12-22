@@ -99,7 +99,9 @@ typedef struct motor_init
     int photoresistor_read_interval_ms;
 } motor_init_t;
 
-// commands for motor
+// commands and partameters for motor
+extern const int STEPS_ONE_TURN;
+
 enum MotorCommand {
     RUN_ANTICLOCKWISE = -1,
     MOTOR_IDLE,

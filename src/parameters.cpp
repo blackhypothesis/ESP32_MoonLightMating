@@ -60,9 +60,7 @@ const int IN8 = 26;
 const int MAX_MOTOR = 1;
 const int MOTOR_STEPS_OPEN_CLOSE = 1300; // obsolete
 
-// door open / close
-const int OPEN_DOOR = 1;
-const int CLOSE_DOOR = -1;
+const int STEPS_ONE_TURN = 4096;
 
 // end switches (analog)
 const int END_SWITCH0 = 36;
