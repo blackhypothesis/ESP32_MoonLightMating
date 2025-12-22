@@ -39,7 +39,7 @@ void scheduleMotorCommands(void *);
 void controlStepperMotor(void *);
 void queenHiveUpdate(void *);
 void sendWifiConfigToClients(void *);
-void queueMotorCommand(const int, const int);
+void queueMotorControl(const int, const MotorCommand);
 
 void initApp(void *pvParameters);
 

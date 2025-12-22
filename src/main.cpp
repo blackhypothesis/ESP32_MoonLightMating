@@ -85,7 +85,7 @@ void initApp(void *pvParameters) {
 	}
   // initialize motor command queues
   for (int i = 0; i < MAX_MOTOR; i++) {
-    motor_cmd_queue[i] = xQueueCreate(5, sizeof(motor_cmd_t));
+    motor_cmd_queue[i] = xQueueCreate(5, sizeof(motor_control_t));
   }
   // initialize motor init parameters
   for (int i = 0; i < MAX_MOTOR; i++) {
@@ -387,10 +387,10 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       Serial.println(error.f_str());
     }
     else {
-      const int steps = control_motor["steps"];
-      const int direction = control_motor["direction"];
-      Serial.printf("%s handleWebSocketMessage: steps = %d, direction = %d\n", getDateTime().c_str(), direction);
-      queueMotorCommand(steps, direction);
+      int steps = control_motor["steps"];
+      MotorCommand command = control_motor["command"];
+      Serial.printf("%s handleWebSocketMessage: steps = %d, command = %d\n", getDateTime().c_str(), command);
+      queueMotorControl(steps, command);
     }
   }
 }
@@ -428,7 +428,8 @@ void webSocketNotifyClients(void *pvParameters) {
 // Task: schedule motor commands 
 // ---------------------------------------------------------
 void scheduleMotorCommands(void *pvParameters) {
-  int steps, direction;
+  int steps;
+  enum MotorCommand command;
   int config_enable = 0;
   Serial.printf("%s Task scheduleMotorCommands started\n", getDateTime().c_str());
 
@@ -449,8 +450,8 @@ void scheduleMotorCommands(void *pvParameters) {
         Serial.printf("Schedule config disabled. Command for motors to open will not queued.\n");
       } else {
         steps = MOTOR_STEPS_OPEN_CLOSE;
-        direction = 1;
-        queueMotorCommand(steps, direction);
+        command = RUN_CLOCKWISE;
+        queueMotorControl(steps, command);
       }
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
@@ -460,8 +461,8 @@ void scheduleMotorCommands(void *pvParameters) {
         Serial.printf("Schedule config disabled. Command for motors to close will not queued.\n");
       } else {
         steps = MOTOR_STEPS_OPEN_CLOSE;
-        direction = -1;
-        queueMotorCommand(steps, direction);
+        command = RUN_ANTICLOCKWISE;
+        queueMotorControl(steps, command);
       }
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
@@ -474,7 +475,7 @@ void scheduleMotorCommands(void *pvParameters) {
 // ---------------------------------------------------------
 void controlStepperMotor(void *pvParameters) {
   const motor_init_t *mc = (motor_init_t *) pvParameters;
-  motor_cmd_t cmd;
+  motor_control_t cmd;
   bool force_motor_stop = false;
   int end_switch_old = 0;
   int end_switch_current = 0;
@@ -493,9 +494,9 @@ void controlStepperMotor(void *pvParameters) {
     // if motor is idle, try to get new command from queue
     if (stepper.distanceToGo() == 0) {
       if (xQueueReceive(motor_cmd_queue[mc->motor_nr], (void *) &cmd, 1000) == pdTRUE) {
-        Serial.printf("%s Motor %d: received cmd: steps: %d; direction: %d\n", getDateTime().c_str(), mc->motor_nr, cmd.steps, cmd.direction);
+        Serial.printf("%s Motor %d: received cmd: steps: %d; direction: %d\n", getDateTime().c_str(), mc->motor_nr, cmd.steps, cmd.command);
         set_last_action_to_now();
-        stepper.move(cmd.steps * cmd.direction);
+        stepper.move(cmd.steps * cmd.command);
       }
     }
 
@@ -507,7 +508,7 @@ void controlStepperMotor(void *pvParameters) {
         JsonDocument motor_status;
         char serialized_motor_status[64];
         motor_status["motor_nr"] = mc->motor_nr;
-        motor_status["direction"] = cmd.direction;
+        motor_status["direction"] = cmd.command;
         serializeJson(motor_status, serialized_motor_status);
         notifyClients(String(serialized_motor_status));
 
@@ -545,7 +546,7 @@ void controlStepperMotor(void *pvParameters) {
         motor_status["direction"] = 0;
         serializeJson(motor_status, serialized_motor_status);
         notifyClients(String(serialized_motor_status));
-        Serial.printf("%s Motor %d: executed cmd: steps: %d; direction: %d\n", getDateTime().c_str(), mc->motor_nr, cmd.steps, cmd.direction);
+        Serial.printf("%s Motor %d: executed cmd: steps: %d; direction: %d\n", getDateTime().c_str(), mc->motor_nr, cmd.steps, cmd.command);
         set_last_action_to_now();
       }
       else {
@@ -650,13 +651,13 @@ void sendWifiConfigToClients(void *pvParameters) {
   }
 }
 
-void queueMotorCommand(const int steps, const int direction) {
+void queueMotorControl(const int steps, const MotorCommand command) {
   for (int i = 0; i < MAX_MOTOR; i++) {
-    motor_cmd[i] = {steps, direction};
+    motor_ctrl[i] = {steps, command};
   }
 
   for (int i = 0; i < MAX_MOTOR; i++) {
-    if (xQueueSend(motor_cmd_queue[i], (void *) &motor_cmd[i], 1000) != pdTRUE) {
+    if (xQueueSend(motor_cmd_queue[i], (void *) &motor_ctrl[i], 1000) != pdTRUE) {
       Serial.printf("%s Queue %d full.\n", getDateTime().c_str(), i);
     }
   }

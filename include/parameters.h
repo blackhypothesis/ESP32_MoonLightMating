@@ -100,14 +100,22 @@ typedef struct motor_init
 } motor_init_t;
 
 // commands for motor
-typedef struct motor_cmd
+enum MotorCommand {
+    RUN_ANTICLOCKWISE = -1,
+    MOTOR_INIT,
+    RUN_CLOCKWISE,
+    DOOR_OPEN,
+    DOOR_CLOSE
+};
+
+typedef struct motor_control
 {
     int steps;
-    int direction;
-} motor_cmd_t;
+    MotorCommand command;
+} motor_control_t;
 
 extern motor_init_t motor_init[];
-extern motor_cmd_t motor_cmd[];
+extern motor_control_t motor_ctrl[];
 
 // end switches (analog)
 extern const int END_SWITCH0;

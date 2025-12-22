@@ -1,6 +1,6 @@
 let gateway = `ws://${window.location.hostname}/ws`;
 let websocket;
-let direction;
+let command;
 
 window.onload = function() {
     initWebSocket();
@@ -33,17 +33,17 @@ function onClose(event) {
 function onMessage(event) {
     console.log(event.data);
     let msg = JSON.parse(event.data);
-    direction = msg["direction"];
+    command = msg["command"];
     let motor_element = "motor-" + msg["motor_nr"] + "-state";
-    if (direction == 0) {
+    if (command == 0) {
         document.getElementById(motor_element).innerHTML = "Motor stopped."
         document.getElementById(motor_element).style.color = "red";
     }
-    else if (direction == 1) {
+    else if (command == 1) {
         document.getElementById(motor_element).innerHTML = "Clockwise.";
         document.getElementById(motor_element).style.color = "green";
     }
-    else if (direction == -1) {
+    else if (command == -1) {
         document.getElementById(motor_element).innerHTML = "Anticlockwise.";
         document.getElementById(motor_element).style.color = "blue";
     }
@@ -61,17 +61,17 @@ function handleNavBar() {
 }
 
 function runMotor() {
-    const rbs = document.querySelectorAll('input[name="direction"]');
-    let direction;
+    const rbs = document.querySelectorAll('input[name="command"]');
+    let command;
     for (const rb of rbs) {
         if (rb.checked) {
-            direction = rb.value;
+            command = rb.value;
             break;
         }
     }
 
     let steps = document.getElementById("steps").value;
-    let msg = '{"steps":' + steps + ',"direction":' + direction + '}';
+    let msg = '{"steps":' + steps + ',"command":' + command + '}';
     console.log(msg);
     websocket.send(msg);
 }
