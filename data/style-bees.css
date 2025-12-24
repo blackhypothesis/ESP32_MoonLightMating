@@ -1,0 +1,223 @@
+html {
+  font-family:Arial, Helvetica, sans-serif;
+  font-weight: bolder;
+}
+
+body {
+  background-image: url('bee.jpg');
+  margin: 0;
+}
+
+h1 {
+  font-size: 1.8rem;
+  color: rgb(0, 0, 0);
+  text-align: center
+}
+
+p{
+  font-size: 20px;
+  text-align: center;
+  padding: 5px;
+  margin: 2px;
+}
+
+table {
+  margin: 0 auto;
+  width: 90%
+}
+
+th, td {
+  text-align: left;
+  padding: 8px;
+  background-color: #fce903;
+}
+
+form{
+  border-radius: 5px;
+  background-color: rgba(255, 191, 0, .0);
+  padding: 20px;
+}
+
+button {
+  background-color: #883709;
+  border: none;
+  padding: 14px 20px;
+  text-align: center;
+  font-size: 20px;
+  border-radius: 10px;
+  transition-duration: 0.4s;
+  width: 90%;
+  color: #ffbf00;
+  cursor: pointer;
+  margin: 10px;
+}
+
+button:hover {
+    background-color: #9c400a;
+}
+
+input[type=number], select {
+  width: 100%;
+  padding: 2px 2px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 2px solid rgb(45, 63, 51);;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+input[type="radio"] {
+  appearance: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgb(45, 63, 51);
+  transition: 0.2s all linear;
+  margin-right: 5px;
+  position: relative;
+  top: 4px;
+  color: black;
+  }
+
+input[type="radio"]:checked{
+  border: 6px solid #883709;
+}
+
+input[type=submit] {
+  background-color: #883709;
+  border: none;
+  padding: 14px 20px;
+  text-align: center;
+  font-size: 20px;
+  border-radius: 10px;
+  transition-duration: 0.4s;
+  width: 90%;
+  color: #ffbf00;
+  cursor: pointer;
+  margin: 10px;
+}
+
+.topnav {
+  overflow: hidden;
+  background-color: #883709;
+  text-align: center;
+}
+
+  /* Style the links inside the navigation bar */
+.topnav a {
+  float: left;
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 6px 6px;
+  text-decoration: none;
+  font-size: 1.0rem;
+}
+
+  /* Change the color of links on hover */
+.topnav a:hover {
+  background-color: black;
+  color: rgb(255, 191, 0);;
+}
+
+/* Hide the link that should open and close the topnav on small screens */
+.topnav .icon {
+  display: none;
+}
+
+.topnav-right{
+  float:right;
+}
+
+.toptitle {
+  color: rgb(255, 191, 0);
+  font-size: 3rem;
+}
+
+.disabled {
+  pointer-events: none;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px
+}
+
+.switch input {
+  display: none
+}
+
+.slider {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #883709;
+  border-radius: 25px
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 25px;
+}
+
+input:checked+.slider {
+  background-color: #883709;
+}
+
+input:checked+.slider:before {
+  transform: translateX(26px);
+}
+
+.content {
+  padding: 20px;
+  max-width: max-content;
+  margin: 0 auto;
+}
+
+card-grid {
+  max-width: 800px;
+  margin: 0 auto;
+  display: grid;
+  grid-gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.card {
+  background-color: rgba(255, 191, 0, .7);
+  box-shadow: 4px 4px 12px 1px rgba(27, 26, 26, 0.5);
+  border-radius: 10px;
+}
+
+#motor-state{
+  font-weight: bold;
+  color: red;
+}
+
+.queenshive-ip {
+  background-color: midnightblue;
+  color: white;
+}
+
+.queenshive-ip a:link {
+  color: white;
+}
+
+.queenshive-ip a:visited {
+  color: white;
+}
+
+.highlight-red{
+  background: red;
+}
+
+.highlight-green{
+  background: green;
+}

@@ -4,7 +4,6 @@ html {
 }
 
 body {
-  /* background-image: url('bee.jpg'); */
   background-color: black;
   margin: 0;
 }
@@ -53,11 +52,9 @@ button {
   margin: 10px;
 }
 
-/*
 button:hover {
-   background-color: #9c400a;
+   background-color: #5668d0;
 }
-*/
 
 input[type=number], select {
   width: 100%;
@@ -70,8 +67,6 @@ input[type=number], select {
 }
 
 input[type="radio"] {
-  -webkit-appearance: none;
-  -moz-appearance: none;
   appearance: none;
   border-radius: 50%;
   width: 18px;
@@ -105,9 +100,11 @@ input[type=submit] {
 .topnav {
   overflow: hidden;
   background-color: midnightblue;
-  }
+  text-align: center;
+}
+
   /* Style the links inside the navigation bar */
-  .topnav a {
+.topnav a {
   float: left;
   display: block;
   color: white;
@@ -122,9 +119,7 @@ input[type=submit] {
   background-color: blue;
   color: white;
 }
-.disabled {
-  pointer-events: none;
-}
+
 /* Hide the link that should open and close the topnav on small screens */
 .topnav .icon {
   display: none;
@@ -137,6 +132,10 @@ input[type=submit] {
 .toptitle {
   color: black;
   font-size: 3rem;
+}
+
+.disabled {
+  pointer-events: none;
 }
 
 .switch {
@@ -174,8 +173,6 @@ input:checked+.slider {
 }
 
 input:checked+.slider:before {
-  -webkit-transform: translateX(26px);
-  -ms-transform: translateX(26px);
   transform: translateX(26px);
 }
 
