@@ -139,6 +139,7 @@ void initApp(void *pvParameters) {
   server.on("/getclientstates", HTTP_GET, requestGetClientStates);
   server.on("/scanwifi", HTTP_GET, requestScanWifi);
   server.on("/secondssinceboot", HTTP_GET, requestSecondsSinceBoot);
+  server.on("/mctrl", HTTP_GET, requestMotorControl);
 
   server.serveStatic("/", SPIFFS, "/");
 
@@ -390,7 +391,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       int steps = control_motor["steps"];
       int command = control_motor["command"];
       Serial.printf("%s handleWebSocketMessage: steps = %d, command = %d\n", getDateTime().c_str(), steps, command);
-      queueMotorControl(steps, (MotorCommand)command);
+      queueMotorControl((MotorCommand)command, steps);
     }
   }
 }
@@ -519,7 +520,7 @@ void sendWifiConfigToClients(void *pvParameters) {
   }
 }
 
-void queueMotorControl(const int steps, const MotorCommand command) {
+void queueMotorControl(const MotorCommand command, const int steps) {
   for (int i = 0; i < MAX_MOTOR; i++) {
     motor_ctrl[i] = {steps, command};
   }

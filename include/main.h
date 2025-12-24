@@ -38,7 +38,7 @@ void webSocketNotifyClients(void *);
 
 void queenHiveUpdate(void *);
 void sendWifiConfigToClients(void *);
-void queueMotorControl(const int, const MotorCommand);
+void queueMotorControl(const MotorCommand, const int);
 
 void initApp(void *pvParameters);
 

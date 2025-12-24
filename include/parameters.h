@@ -108,7 +108,7 @@ enum MotorCommand {
     RUN_CLOCKWISE,
     DOOR_OPEN,
     DOOR_CLOSE,
-    MOTOR_INIT
+    MOTOR_INIT,
 };
 
 enum QueryEndSwitch {

@@ -3,6 +3,7 @@
 
 #include <ESPAsyncWebServer.h>
 #include "parameters.h"
+#include "motor_control.h"
 
 void requestRootURL(AsyncWebServerRequest *request);
 void requestSaveHiveWifiConfig(AsyncWebServerRequest *request);
@@ -19,5 +20,6 @@ void requestSetScheduleConfig(AsyncWebServerRequest *request);
 void requestGetClientStates(AsyncWebServerRequest *request);
 void requestScanWifi(AsyncWebServerRequest *request);
 void requestSecondsSinceBoot(AsyncWebServerRequest *request);
+void requestMotorControl(AsyncWebServerRequest *request);
 
 #endif

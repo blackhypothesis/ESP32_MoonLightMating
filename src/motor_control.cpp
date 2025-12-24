@@ -25,8 +25,8 @@ void scheduleMotorCommands(void *pvParameters) {
         Serial.printf("Schedule config disabled. Command for motors to open will not queued.\n");
       } else {
         steps = STEPS_ONE_TURN;
-        command = DOOR_OPEN;
-        queueMotorControl(steps, command);
+        command = MotorCommand::DOOR_OPEN;
+        queueMotorControl(command, steps);
       }
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
@@ -36,8 +36,8 @@ void scheduleMotorCommands(void *pvParameters) {
         Serial.printf("Schedule config disabled. Command for motors to close will not queued.\n");
       } else {
         steps = STEPS_ONE_TURN;
-        command = DOOR_CLOSE;
-        queueMotorControl(steps, command);
+        command = MotorCommand::DOOR_CLOSE;
+        queueMotorControl(command, steps);
       }
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
@@ -63,8 +63,6 @@ void controlStepperMotor(void *pvParameters) {
   Serial.printf("%s Task controlStepperMotor started: motor_nr: %d\n", getDateTime().c_str(), mc->motor_nr);
 
   while(true) {
-    uxHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
-    Serial.printf("%s uxHighWaterMark %d\n", getDateTime().c_str(), uxHighWaterMark);
     // if motor is idle, try to get new command from queue ...
     if (stepper.distanceToGo() == 0) {
       if (xSemaphoreTake(run_motor_mutex, 1000) == pdTRUE) {
@@ -84,15 +82,15 @@ void controlStepperMotor(void *pvParameters) {
           // .. and run the command
           switch(cmd.command) {
 
-            case RUN_ANTICLOCKWISE:
-            case RUN_CLOCKWISE:
+            case MotorCommand::RUN_ANTICLOCKWISE:
+            case MotorCommand::RUN_CLOCKWISE:
               res = moveMotor(&stepper, mc, cmd.steps * cmd.command, QueryEndSwitch::NONE);
               if (!res) {
                 Serial.printf("%s Motor %d: Error during moving motor.\n", getDateTime().c_str(), mc->motor_nr);
               }
               break;
 
-            case DOOR_OPEN:
+            case MotorCommand::DOOR_OPEN:
               res = moveMotor(&stepper, mc, STEPS_ONE_TURN, QueryEndSwitch::POSITIVE);
               if (!res) {
                 Serial.printf("%s Motor %d: Error during moving motor.\n", getDateTime().c_str(), mc->motor_nr);
@@ -106,7 +104,11 @@ void controlStepperMotor(void *pvParameters) {
                 Serial.printf("%s Motor %d: Error during moving motor.\n", getDateTime().c_str(), mc->motor_nr);
               }
               break;
-            case DOOR_CLOSE:
+            case MotorCommand::DOOR_CLOSE:
+              res = moveMotor(&stepper, mc, -1 * mc->offset_close_door/2, QueryEndSwitch::NONE);
+              if (!res) {
+                Serial.printf("%s Motor %d: Error during moving motor.\n", getDateTime().c_str(), mc->motor_nr);
+              }
               res = moveMotor(&stepper, mc, -1 * STEPS_ONE_TURN, QueryEndSwitch::NEGATIVE);
               if (!res) {
                 Serial.printf("%s Motor %d: Error during moving motor.\n", getDateTime().c_str(), mc->motor_nr);
@@ -116,7 +118,7 @@ void controlStepperMotor(void *pvParameters) {
                 Serial.printf("%s Motor %d: Error during moving motor.\n", getDateTime().c_str(), mc->motor_nr);
               }
               break;
-            case MOTOR_INIT:
+            case MotorCommand::MOTOR_INIT:
               res = moveMotor(&stepper, mc, STEPS_ONE_TURN, QueryEndSwitch::POSITIVE);
               if (!res) {
                 Serial.printf("%s Motor %d: Error during moving motor.\n", getDateTime().c_str(), mc->motor_nr);
@@ -137,10 +139,14 @@ void controlStepperMotor(void *pvParameters) {
               if (!res) {
                 Serial.printf("%s Motor %d: Error during moving motor.\n", getDateTime().c_str(), mc->motor_nr);
               }
+              res = moveMotor(&stepper, mc, -400, QueryEndSwitch::NONE);
+              if (!res) {
+                Serial.printf("%s Motor %d: Error during moving motor.\n", getDateTime().c_str(), mc->motor_nr);
+              }
               break;
           }
           set_last_action_to_now();
-          motor_status["command"] = 0;
+          motor_status["command"] = MotorCommand::MOTOR_IDLE;
           serializeJson(motor_status, serialized_motor_status);
           notifyClients(String(serialized_motor_status));
           Serial.printf("%s Motor %d: executed cmd: steps: %d; command: %d\n", getDateTime().c_str(), mc->motor_nr, cmd.steps, cmd.command);
