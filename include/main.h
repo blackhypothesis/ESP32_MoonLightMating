@@ -1,15 +1,14 @@
-#ifndef MAIN_H
-#define MAIN_H
+#pragma once
 
 #include "Arduino.h"
 #include "SPIFFS.h"
 #include <ArduinoJson.h>
 #include <WiFi.h>
-#include <ESPAsyncWebServer.h>
 #include <ArduinoHttpClient.h>
 // #include <ElegantOTA.h>
 #include <AccelStepper.h>
 #include <TimeLib.h>
+#include "webserver.h"
 #include "parameters.h"
 #include "helper_functions.h"
 #include "requests.h"
@@ -30,9 +29,6 @@ void scanWiFi();
 bool initWiFi();
 bool initAP();
 
-void notifyClients(String);
-void handleWebSocketMessage(void *, uint8_t *, size_t);
-void onEvent(AsyncWebSocket *, AsyncWebSocketClient *, AwsEventType, void *, uint8_t *, size_t);
 void initWebSocket();
 void webSocketNotifyClients(void *);
 
@@ -44,5 +40,3 @@ void initApp(void *pvParameters);
 
 void setup();
 void loop();
-
-#endif

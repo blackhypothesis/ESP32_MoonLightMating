@@ -1,5 +1,4 @@
-#ifndef REQUESTS_H
-#define REQUESTS_H
+#pragma once
 
 #include <ESPAsyncWebServer.h>
 #include "parameters.h"
@@ -21,5 +20,3 @@ void requestGetClientStates(AsyncWebServerRequest *request);
 void requestScanWifi(AsyncWebServerRequest *request);
 void requestSecondsSinceBoot(AsyncWebServerRequest *request);
 void requestMotorControl(AsyncWebServerRequest *request);
-
-#endif

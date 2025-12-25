@@ -372,49 +372,6 @@ String getClientStates() {
   }
 }
 
-void notifyClients(String state) {
-  ws.textAll(state);
-}
-
-void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
-  AwsFrameInfo *info = (AwsFrameInfo*)arg;
-  if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-    data[len] = 0;
-    JsonDocument control_motor;
-    Serial.printf("String data: %s\n", (char *)data);
-    DeserializationError error = deserializeJson(control_motor, (char *)data);
-    if (error) {
-      Serial.println("Error:deserialization failed.");
-      Serial.println(error.f_str());
-    }
-    else {
-      int steps = control_motor["steps"];
-      int command = control_motor["command"];
-      Serial.printf("%s handleWebSocketMessage: steps = %d, command = %d\n", getDateTime().c_str(), steps, command);
-      queueMotorControl((MotorCommand)command, steps);
-    }
-  }
-}
-
-void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-  switch (type) {
-    case WS_EVT_CONNECT:
-      Serial.printf("%s WebSocket client #%u connected from %s\n", getDateTime().c_str(), client->id(), client->remoteIP().toString().c_str());
-      //Notify client of state
-      notifyClients("state");
-      break;
-    case WS_EVT_DISCONNECT:
-      Serial.printf("%s WebSocket client #%u disconnected\n", getDateTime().c_str(), client->id());
-      break;
-    case WS_EVT_DATA:
-        handleWebSocketMessage(arg, data, len);
-        break;
-    case WS_EVT_PONG:
-    case WS_EVT_ERROR:
-     break;
-  }
-}
-
 void initWebSocket() {
   ws.onEvent(onEvent);
   server.addHandler(&ws);

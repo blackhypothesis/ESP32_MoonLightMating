@@ -1,5 +1,4 @@
-#ifndef HELPER_FUNCTIONS_H
-#define HELPER_FUNCTIONS_H
+#pragma once
 
 #include "Arduino.h"
 #include <ArduinoJson.h>
@@ -31,5 +30,3 @@ String getWifiConfig();
 
 void IRAM_ATTR handleButtonPress();
 void interruptFunction();
-
-#endif

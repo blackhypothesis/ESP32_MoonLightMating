@@ -1,5 +1,4 @@
-#ifndef PARAMETERS_H
-#define PARAMETERS_H
+#pragma once
 
 #include "Arduino.h"
 
@@ -174,5 +173,3 @@ extern schedule_motor_t sched_motor;
 
 extern QueueHandle_t motor_cmd_queue[];
 extern QueueHandle_t log_queue;
-
-#endif
