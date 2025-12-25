@@ -163,6 +163,18 @@ void controlStepperMotor(void *pvParameters) {
   }
 }
 
+void queueMotorControl(const MotorCommand command, const int steps) {
+  for (int i = 0; i < MAX_MOTOR; i++) {
+    motor_ctrl[i] = {steps, command};
+  }
+
+  for (int i = 0; i < MAX_MOTOR; i++) {
+    if (xQueueSend(motor_cmd_queue[i], (void *) &motor_ctrl[i], 1000) != pdTRUE) {
+      Serial.printf("%s Queue %d full.\n", getDateTime().c_str(), i);
+    }
+  }
+}
+
 bool moveMotor(AccelStepper *stepper, const motor_init_t *mc, int steps, const QueryEndSwitch queryEndSwitch) {
   bool force_motor_stop = false;
   int end_switch_old = 0;
@@ -213,4 +225,60 @@ bool moveMotor(AccelStepper *stepper, const motor_init_t *mc, int steps, const Q
   }
 
   return true;
+}
+
+// calculate amount of seconds, till motor should start
+int secondsTillMotorStart(String openClose) {
+  int h_action = 0, m_action = 0, s_action = 0;
+  int h_now, m_now, s_now;
+  int seconds_till_motor_start;
+
+  h_now = hour();
+  m_now = minute();
+  s_now = second();
+
+  if(xSemaphoreTake(schedule_motor_mutex, 300 / portTICK_PERIOD_MS) == pdTRUE) {
+    if (openClose == "open") {
+      h_action = sched_motor.hour_door_open;
+      m_action = sched_motor.minute_door_open;
+    }
+    else {
+      h_action = sched_motor.hour_door_close;
+      m_action = sched_motor.minute_door_close;
+    }
+    xSemaphoreGive(schedule_motor_mutex);
+  }
+
+  if (hive_config.hive_type == HIVE_QUEENS) {
+    int h_qd, m_qd, s_qd;
+    int divisor_for_minutes, divisor_for_seconds;
+
+    h_qd = floor(sched_motor.queens_delay / (60 * 60));
+    divisor_for_minutes = sched_motor.queens_delay % (60 * 60);
+    m_qd = floor(divisor_for_minutes / 60);
+    divisor_for_seconds = divisor_for_minutes % 60;
+    s_qd = ceil(divisor_for_seconds);
+
+    s_action += s_qd;
+    if (s_action > 59) {
+      s_action -= 60;
+      m_action++;
+    }
+    m_action += m_qd;
+    if (m_action > 59) {
+      m_action -= 60;
+      h_action++;
+    }
+    h_action += h_qd;
+    if (h_action > 23) {
+      h_action -= 24;
+    }
+  }
+
+  if (h_action < h_now || (h_action == h_now && m_action < m_now) || (h_action == h_now && m_action == m_now && s_action < s_now)) {
+    h_action += 24;
+  }
+
+  seconds_till_motor_start = (h_action - h_now) * 3600 + (m_action - m_now) * 60 + (s_action - s_now);
+  return seconds_till_motor_start;
 }

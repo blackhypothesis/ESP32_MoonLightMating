@@ -3,6 +3,7 @@
 #include <ESPAsyncWebServer.h>
 #include "parameters.h"
 #include "motor_control.h"
+#include "network_wifi.h"
 
 void requestRootURL(AsyncWebServerRequest *request);
 void requestSaveHiveWifiConfig(AsyncWebServerRequest *request);

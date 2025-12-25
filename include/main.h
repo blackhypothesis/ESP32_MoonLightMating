@@ -19,21 +19,11 @@ void set_last_action_to_now();
 void update_clients(char *, char *);
 void initFS();
 
-int secondsTillMotorStart(String);
-
 String getConfigStatus();
-
 String getClientStates();
-
-void scanWiFi();
-bool initWiFi();
-bool initAP();
-
-void webSocketNotifyClients(void *);
 
 void queenHiveUpdate(void *);
 void sendWifiConfigToClients(void *);
-void queueMotorControl(const MotorCommand, const int);
 
 void initApp(void *pvParameters);
 
