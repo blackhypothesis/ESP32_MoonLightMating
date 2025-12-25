@@ -12,18 +12,6 @@ void debug(char *task_name, char* message) {
 // Task: app initialize
 // ---------------------------------------------------------
 void initApp(void *pvParameters) {
-
-  // Create AsyncWebServer object on port 80 and WebSocket object
-  AsyncWebServer *webserver = new AsyncWebServer(80);
-  AsyncWebSocket *ws = new AsyncWebSocket("/ws");
-  webserver->addHandler(ws);
-  webserver->begin();
-
-  // Start OTA capability to webserver
-  // ElegantOTA.begin(&server);
-  // Start server
-  
-  
   time_t since_last_action_seconds;
 
   Serial.begin(115200);
@@ -123,6 +111,15 @@ void initApp(void *pvParameters) {
     Serial.printf("%s Created Task: Queen Hive Update\n", getDateTime().c_str());
   }
 
+  // Create AsyncWebServer object on port 80 and WebSocket object
+  AsyncWebServer *webserver = newWebServer();
+  AsyncWebSocket *ws = newWebSocket();
+  webserver->addHandler(ws);
+  webserver->begin();
+
+  // Start OTA capability to webserver
+  // ElegantOTA.begin(&server);
+  
   actionBlink(3, 300);
 
   // Loop
@@ -188,7 +185,6 @@ void initApp(void *pvParameters) {
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
-
 
 // Update last action
 void set_last_action_to_now() {
