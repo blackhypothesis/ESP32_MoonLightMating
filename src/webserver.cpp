@@ -1,6 +1,6 @@
 #include "webserver.h"
 
-AsyncWebServer* newWebServer(AsyncWebSocket *ws) {
+AsyncWebServer* newWebServer() {
   // ---------------------------------------------------------
   // Web Server
   // ---------------------------------------------------------
@@ -8,9 +8,6 @@ AsyncWebServer* newWebServer(AsyncWebSocket *ws) {
   AsyncWebServer *webserver;
   webserver = new AsyncWebServer(80);
   // ---------------------------------------------------------
-
-  ws->onEvent(onEvent);
-  webserver->addHandler(ws);
 
   // Web Server API
   webserver->on("/", HTTP_GET, requestRootURL);
@@ -36,7 +33,7 @@ AsyncWebServer* newWebServer(AsyncWebSocket *ws) {
   // ElegantOTA.begin(&server);
 
   // Start server
-  webserver->begin();
+  // webserver->begin();
 
   return webserver;
 }
@@ -44,10 +41,12 @@ AsyncWebServer* newWebServer(AsyncWebSocket *ws) {
 AsyncWebSocket* newWebSocket() {
   // Create a WebSocket object
   AsyncWebSocket *ws;
+  ws = new AsyncWebSocket("/ws");
+  ws->onEvent(onEvent);
   return ws;
 }
 
-void notifyClients(AsyncWebSocket* ws, String state) {
+void notifyClients(AsyncWebSocket *ws, String state) {
   ws->textAll(state);
 }
 
@@ -76,7 +75,7 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
     case WS_EVT_CONNECT:
       Serial.printf("%s WebSocket client #%u connected from %s\n", getDateTime().c_str(), client->id(), client->remoteIP().toString().c_str());
       //Notify client of state
-      notifyClients("state");
+      notifyClients(server, "state");
       break;
     case WS_EVT_DISCONNECT:
       Serial.printf("%s WebSocket client #%u disconnected\n", getDateTime().c_str(), client->id());

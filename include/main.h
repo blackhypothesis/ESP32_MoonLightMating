@@ -29,7 +29,6 @@ void scanWiFi();
 bool initWiFi();
 bool initAP();
 
-void initWebSocket();
 void webSocketNotifyClients(void *);
 
 void queenHiveUpdate(void *);

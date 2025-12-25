@@ -77,7 +77,8 @@ void controlStepperMotor(void *pvParameters) {
           // TODO: use parameter cmd.command
           motor_status["command"] = cmd.command;
           serializeJson(motor_status, serialized_motor_status);
-          notifyClients(String(serialized_motor_status));
+          // TODO: fix websocket message
+          // notifyClients(String(serialized_motor_status));
 
           // .. and run the command
           switch(cmd.command) {
@@ -148,7 +149,8 @@ void controlStepperMotor(void *pvParameters) {
           set_last_action_to_now();
           motor_status["command"] = MotorCommand::MOTOR_IDLE;
           serializeJson(motor_status, serialized_motor_status);
-          notifyClients(String(serialized_motor_status));
+          // TODO: fix websocket message
+          // notifyClients(String(serialized_motor_status));
           Serial.printf("%s Motor %d: executed cmd: steps: %d; command: %d\n", getDateTime().c_str(), mc->motor_nr, cmd.steps, cmd.command);
         }
         xSemaphoreGive(run_motor_mutex);

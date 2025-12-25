@@ -9,19 +9,22 @@ void debug(char *task_name, char* message) {
     Serial.printf("%s\n", task_message);
 }
 
-// ---------------------------------------------------------
-// Web Server
-// ---------------------------------------------------------
-// Create AsyncWebServer object on port 80
-AsyncWebServer server(80);
-// Create a WebSocket object
-AsyncWebSocket ws("/ws");
-
 // Task: app initialize
 // ---------------------------------------------------------
 void initApp(void *pvParameters) {
-  time_t since_last_action_seconds;
 
+  // Create AsyncWebServer object on port 80 and WebSocket object
+  AsyncWebServer *webserver = new AsyncWebServer(80);
+  AsyncWebSocket *ws = new AsyncWebSocket("/ws");
+  webserver->addHandler(ws);
+  webserver->begin();
+
+  // Start OTA capability to webserver
+  // ElegantOTA.begin(&server);
+  // Start server
+  
+  
+  time_t since_last_action_seconds;
 
   Serial.begin(115200);
   vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -120,41 +123,13 @@ void initApp(void *pvParameters) {
     Serial.printf("%s Created Task: Queen Hive Update\n", getDateTime().c_str());
   }
 
-  // Webserver: initialize
-  initWebSocket();
-  // ---------------------------------------------------------
-  // Web Server Root URL
-  server.on("/", HTTP_GET, requestRootURL);
-  server.on("/", HTTP_POST, requestSaveHiveWifiConfig);
-  server.on("/getversion", HTTP_GET, requestGetVersion);
-  server.on("/getdatetime", HTTP_GET, requestGetDateTime);
-  server.on("/gethiveconfig", HTTP_GET, requestGetHiveConfig);
-  server.on("/getwificonfig", requestGetWifiConfig);
-  server.on("/resetdefaultconfig", HTTP_GET, requestResetDefaultConfig);
-  server.on("/reboot", HTTP_GET, requestReboot);
-  server.on("/getconfigstatus", HTTP_GET, requestGetConfigStatus);
-  server.on("/getconfigstatusclient", HTTP_GET, requestGetConfigStatusClient);
-  server.on("/setdatetime", HTTP_GET, requestSetDateTime);
-  server.on("/setscheduleconfig", HTTP_GET, requestSetScheduleConfig);
-  server.on("/getclientstates", HTTP_GET, requestGetClientStates);
-  server.on("/scanwifi", HTTP_GET, requestScanWifi);
-  server.on("/secondssinceboot", HTTP_GET, requestSecondsSinceBoot);
-  server.on("/mctrl", HTTP_GET, requestMotorControl);
-
-  server.serveStatic("/", SPIFFS, "/");
-
-  // Start OTA capability to webserver
-  // ElegantOTA.begin(&server);
-  // Start server
-  server.begin();
-
   actionBlink(3, 300);
 
   // Loop
   // ---------------------------------------------------------
   while(true) {
     // When the maximum number of clients is exceeded this function closes the oldest client.
-    ws.cleanupClients();
+    ws->cleanupClients();
 
      // during the date and time is set via webinterface, we should wait, till datetime and last_action are updated.
     if (xSemaphoreTake(setdatetime_mutex, 0) == pdTRUE) {
@@ -370,11 +345,6 @@ String getClientStates() {
     Serial.printf("%s getClientStates: mutex locked.\n", getDateTime().c_str());
     return String("");
   }
-}
-
-void initWebSocket() {
-  ws.onEvent(onEvent);
-  server.addHandler(&ws);
 }
 
 // Task: webSocketNotifyClients
