@@ -74,7 +74,6 @@ void controlStepperMotor(void *pvParameters) {
           JsonDocument motor_status;
           char serialized_motor_status[64];
           motor_status["motor_nr"] = mc->motor_nr;
-          // TODO: use parameter cmd.command
           motor_status["command"] = cmd.command;
           serializeJson(motor_status, serialized_motor_status);
           // TODO: fix websocket message

@@ -58,7 +58,13 @@ const int IN8 = 26;
 
 // to initialize motor
 const int MAX_MOTOR = 1;
-const int MOTOR_STEPS_OPEN_CLOSE = 1300; // obsolete
+const int MAX_SPEED = 200;
+const int ACCELERATION = 200;
+// default values will be overwritten by values from hiveconfig.json
+const int DEFAULT_OFFSET_OPEN_DOOR = -50;
+const int DEFAULT_OFFSET_CLOSE_DOOR = -400;
+const int DEFAULT_PHOTORESISTOR_EDGE_DELTA = 300;
+const int DEFAULT_PHOTORESISTOR_READ_INTERVAL_MS = 400;
 
 const int STEPS_ONE_TURN = 4096;
 
@@ -69,7 +75,16 @@ const int END_SWITCH2 = 34;
 const int END_SWITCH3 = 35;
 
 // const motor_init_t motor_init[] = {{0, IN1, IN2, IN3, IN4, 200, 200}, {1, IN5, IN6, IN7, IN8, 200, 200}};
-motor_init_t motor_init[] = {{0, IN1, IN2, IN3, IN4, 200, 200, 0, 0, 0, 0}};
+motor_init_t motor_init[] = {
+    {0,
+      IN1, IN2, IN3, IN4,
+      MAX_SPEED, ACCELERATION,
+      DEFAULT_OFFSET_OPEN_DOOR,
+      DEFAULT_OFFSET_CLOSE_DOOR,
+      DEFAULT_PHOTORESISTOR_EDGE_DELTA,
+      DEFAULT_PHOTORESISTOR_READ_INTERVAL_MS
+    }
+};
 
 motor_control_t motor_ctrl[MAX_MOTOR];
 

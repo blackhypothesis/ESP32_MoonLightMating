@@ -80,11 +80,13 @@ extern const int IN8;
 
 // to initialize motor
 extern const int MAX_MOTOR;
-extern const int MOTOR_STEPS_OPEN_CLOSE; // obsolete
+extern const int MAX_SPEED;
+extern const int ACCELERATION;
+extern const int DEFAULT_OFFSET_OPEN_DOOR;
+extern const int DEFAULT_OFFSET_CLOSE_DOOR;
+extern const int DEFAULT_PHOTORESISTOR_EDGE_DELTA;
+extern const int DEFAULT_PHOTORESISTOR_READ_INTERVAL_MS;
 
-// door open / close
-extern const int OPEN_DOOR;
-extern const int CLOSE_DOOR;
 
 typedef struct motor_init
 {
