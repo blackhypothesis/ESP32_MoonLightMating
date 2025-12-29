@@ -58,8 +58,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     Serial.printf("String data: %s\n", (char *)data);
     DeserializationError error = deserializeJson(control_motor, (char *)data);
     if (error) {
-      Serial.println("Error:deserialization failed.");
-      Serial.println(error.f_str());
+      Serial.printf("%s Error:deserialization failed: %s\n", getDateTime().c_str(), error.f_str());
     }
     else {
       int steps = control_motor["steps"];

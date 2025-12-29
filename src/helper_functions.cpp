@@ -56,7 +56,7 @@ String readFile(fs::FS &fs, const char * path) {
 
   File file = fs.open(path);
   if(!file || file.isDirectory()){
-    Serial.println("- failed to open file for reading");
+    Serial.printf("%s failed to open file for reading\n", getDateTime().c_str());
     return String();
   }
 
@@ -76,13 +76,13 @@ void writeFile(fs::FS &fs, const char * path, const char * message) {
 
   File file = fs.open(path, FILE_WRITE);
   if(!file){
-    Serial.println("- failed to open file for writing");
+    Serial.printf("%s failed to open file for writing\n", getDateTime().c_str());
     return;
   }
   if(file.print(message)){
-    Serial.println("- file written");
+    Serial.printf("%s file written\n", getDateTime().c_str());
   } else {
-    Serial.println("- write failed");
+    Serial.printf("%s write failed\n", getDateTime().c_str());
   }
   file.close();
 }
@@ -96,12 +96,12 @@ void resetDefaultConfigs() {
 
 void readHiveConfigFile() {
   String config = readFile(SPIFFS, HIVE_CONFIG_FILE);
-  Serial.println(config);
+  Serial.printf("%s %s\n", getDateTime().c_str(), config);
   JsonDocument cfg_json;
   DeserializationError error = deserializeJson(cfg_json, config.c_str());
   if (error) {
-    Serial.println("Error: deserialization failed.");
-    Serial.println(error.f_str());
+    Serial.printf("%s Error: deserialization failed.\n", getDateTime().c_str());
+    Serial.printf("%s %s\n", getDateTime().c_str(), error.f_str());
   }
   JsonObject documentRoot = cfg_json.as<JsonObject>();
   int hive_type = documentRoot["hive_type"];
@@ -146,12 +146,12 @@ void writeHiveConfigFile() {
 
 void readWifiConfigFile() {
   String config = readFile(SPIFFS, WIFI_CONFIG_FILE);
-  Serial.println(config);
+  Serial.printf("%s %s\n", getDateTime().c_str(), config);
   JsonDocument cfg_json;
   DeserializationError error = deserializeJson(cfg_json, config.c_str());
   if (error) {
-    Serial.println("Error: deserialization failed.");
-    Serial.println(error.f_str());
+    Serial.printf("%s Error: deserialization failed.\n", getDateTime().c_str());
+    Serial.printf("%s %s\n", getDateTime().c_str(), error.f_str());
   }
   JsonObject documentRoot = cfg_json.as<JsonObject>();
   const char* ssid = documentRoot["ssid"];

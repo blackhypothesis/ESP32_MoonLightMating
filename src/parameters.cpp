@@ -1,6 +1,6 @@
 #include "parameters.h"
 
-const String VERSION = "0.21.2";
+const String VERSION = "0.21.6";
 
 // create mutexes
 SemaphoreHandle_t run_motor_mutex = xSemaphoreCreateMutex();

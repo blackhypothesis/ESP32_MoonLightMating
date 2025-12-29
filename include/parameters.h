@@ -135,7 +135,7 @@ extern const int END_SWITCH3;
 
 const int end_switch[] = {END_SWITCH0, END_SWITCH1};
 
-const int MAX_CLIENTS = 8;
+const int MAX_CLIENTS = 12;
 
 // state of clients
 typedef struct state_client

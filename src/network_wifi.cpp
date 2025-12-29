@@ -9,16 +9,16 @@ void scanWiFi() {
   WiFi.mode(WIFI_STA);
 
   int n = WiFi.scanNetworks();
-  Serial.println("WiFi scan done");
+  Serial.printf("%s WiFi scan done.\n", getDateTime().c_str());
   if (n == 0) {
-      Serial.println("no WiFi networks found");
+      Serial.printf("%s no WiFi networks found\n", getDateTime().c_str());
   } 
   else {
     Serial.print(n);
-    Serial.println(" networks found");
+    Serial.printf("%s networks found\n", getDateTime().c_str());
     for (int i = 0; i < n; ++i) {
       // Print SSID and RSSI for each network found
-      Serial.print(i + 1);
+      Serial.printf("%s %d\n", getDateTime().c_str(), i + 1);
       Serial.print(": ");
       Serial.print(WiFi.SSID(i));
       Serial.print(" (");
@@ -40,7 +40,7 @@ bool initWiFi() {
   IPAddress dns;
 
   if(wifi_config.ssid=="" || wifi_config.ip==""){
-    Serial.println("Undefined SSID or IP address.");
+    Serial.printf("%s Undefined SSID or IP address.\n", getDateTime().c_str());
     return false;
   }
 
@@ -52,12 +52,12 @@ bool initWiFi() {
   // hive_type: Drones -> static IP config, Queens -> dynamic IP config
   if (hive_config.hive_type == HIVE_DRONES) {
     if (WiFi.config(localIP, localGateway, subnet, dns, dns) == false){
-      Serial.println("WiFi STA Failed to configure");
+      Serial.printf("%s WiFi STA Failed to configure.\n", getDateTime().c_str());
       return false;
     }
   }
   WiFi.begin(wifi_config.ssid.c_str(), wifi_config.pass.c_str());
-  Serial.print("Connecting to WiFi ");
+  Serial.printf("%s Connecting to WiFi ", getDateTime().c_str());
 
   unsigned long currentMillis = millis();
   previousMillis = currentMillis;
@@ -67,7 +67,7 @@ bool initWiFi() {
     vTaskDelay(300 / portTICK_PERIOD_MS);
     currentMillis = millis();
     if (currentMillis - previousMillis >= interval) {
-      Serial.println("Failed to connect.");
+      Serial.printf("%s Failed to connect.", getDateTime().c_str());
       return false;
     }
   }
@@ -83,7 +83,7 @@ bool initAP() {
   IPAddress dns;
 
   if(wifi_config.ssid=="" || wifi_config.ip==""){
-    Serial.println("Undefined SSID or IP address.");
+    Serial.printf("%s Undefined SSID or IP address.\n", getDateTime().c_str());
     return false;
   }
 
@@ -91,22 +91,18 @@ bool initAP() {
   localIP.fromString(wifi_config.ip.c_str());
   localGateway.fromString(wifi_config.gateway.c_str());
   dns.fromString(wifi_config.dns.c_str());
-  Serial.println("Set WiFi mode to AP.");
+  Serial.printf("%s Set WiFi mode to AP.\n", getDateTime().c_str());
 
   WiFi.softAP(wifi_config.ssid.c_str(), wifi_config.pass.c_str());
   vTaskDelay(500 / portTICK_PERIOD_MS);
   if (WiFi.softAPConfig(localIP, localGateway, subnet) == false) {
-    Serial.println("WiFi AP Failed to configure");
+    Serial.printf("%s WiFi AP Failed to configure.\n", getDateTime().c_str());
     return false;
   }
 
-  Serial.print("Soft AP SSID:  ");
-  Serial.println(WiFi.softAPSSID());
-  Serial.print("AP IP address: ");
-  Serial.println(WiFi.softAPIP());
-  Serial.print("GW IP:         ");
-  Serial.println(WiFi.gatewayIP());
-  Serial.print("Subnet Mask:   ");
-  Serial.println(WiFi.subnetMask());
+  Serial.printf("%s Soft AP SSID: %s\n", getDateTime().c_str(), WiFi.softAPSSID().c_str());
+  Serial.printf("%s AP IP address: %s\n", getDateTime().c_str(), WiFi.softAPIP().toString().c_str());
+  Serial.printf("%s GW IP: %s\n", getDateTime().c_str(), WiFi.gatewayIP().toString().c_str());
+  Serial.printf("%s Subnet Mask: %s\n", getDateTime().c_str(), WiFi.subnetMask().toString().c_str());
   return true;
 }

@@ -233,7 +233,7 @@ void requestSecondsSinceBoot(AsyncWebServerRequest *request) {
 }
 
 void requestMotorControl(AsyncWebServerRequest *request) {
-  Serial.println("request MotorControl");
+  Serial.printf("%s request MotorControl\n", getDateTime().c_str());
   if (request->hasParam("mcmd") && request->hasParam("steps")) {
     int mcmd = request->getParam("mcmd")->value().toInt();
     int steps = request->getParam("steps")->value().toInt();

@@ -311,7 +311,7 @@ void queenHiveUpdate(void *pvParameters) {
       DeserializationError error = deserializeJson(config, response.c_str());
       if (error) {
         Serial.printf("%s queenHiveUpdate: error: deserialization failed: ", getDateTime().c_str());
-        Serial.println(error.f_str());
+        Serial.printf("%s %s\n", getDateTime().c_str(), error.f_str());
       }
 
       JsonObject root = config.as<JsonObject>();
@@ -387,5 +387,5 @@ void setup() {
   vTaskDelete(NULL);
 }
 void loop() {
-  Serial.println("This text should never be printed!");
+  Serial.printf("%s This text should never be printed!\n", getDateTime().c_str());
 }

@@ -185,32 +185,35 @@ bool moveMotor(AccelStepper *stepper, const motor_init_t *mc, int steps, const Q
   stepper->move(steps);
 
   while(stepper->distanceToGo() != 0) {
-    if (queryEndSwitch != NONE) {
-      if ((xTaskGetTickCount() - ticks) / portTICK_PERIOD_MS > mc->photoresistor_read_interval_ms && force_motor_stop == false) {
-        end_switch_current = analogRead(end_switch[mc->motor_nr]);
+    if ((xTaskGetTickCount() - ticks) / portTICK_PERIOD_MS > mc->photoresistor_read_interval_ms && force_motor_stop == false) {
+      end_switch_current = analogRead(end_switch[mc->motor_nr]);
 
-        if (end_switch_first) {
-          end_switch_old = end_switch_current;
-          end_switch_first = false;
-        }
-        int end_switch_delta = end_switch_current - end_switch_old;
+      if (end_switch_first) {
         end_switch_old = end_switch_current;
-        Serial.printf("%s End switch %d value = %d, delta = %d\n", getDateTime().c_str(), end_switch[mc->motor_nr], end_switch_current, end_switch_delta);
-        // stop motor, if end switch is on
-        if (abs(end_switch_delta) > mc->photoresistor_edge_delta) {
-          if (end_switch_delta > 0 && queryEndSwitch == POSITIVE) {
-            Serial.printf("%s Stop motor: POSITIVE signal flank: photoresistor_edge_delta < end_switch_delta, %d < %d\n", getDateTime().c_str(), mc->photoresistor_edge_delta, end_switch_delta);
-            stepper->stop();
-            force_motor_stop = true;
-          }
-          if (end_switch_delta < 0 && queryEndSwitch == NEGATIVE) {
-            Serial.printf("%s Stop motor: NEGATIVE signal flank: photoresistor_edge_delta < end_switch_delta, %d < %d\n", getDateTime().c_str(), mc->photoresistor_edge_delta, end_switch_delta);
-            stepper->stop();
-            force_motor_stop = true;
-          }          
-        }
-        ticks = xTaskGetTickCount();
+        end_switch_first = false;
       }
+      int end_switch_delta = end_switch_current - end_switch_old;
+      end_switch_old = end_switch_current;
+      Serial.printf("%s End switch %d value = %d, delta = %d\n", getDateTime().c_str(), end_switch[mc->motor_nr], end_switch_current, end_switch_delta);
+      if (abs(end_switch_delta) > mc->photoresistor_edge_delta) {
+        if (end_switch_delta > 0) {
+          Serial.printf("%s POSITIVE signal flank: photoresistor_edge_delta < end_switch_delta, %d < %d\n", getDateTime().c_str(), mc->photoresistor_edge_delta, end_switch_delta);
+          if (queryEndSwitch == QueryEndSwitch::POSITIVE) {
+            stepper->stop();
+            force_motor_stop = true;
+            Serial.printf("%s POSITIVE signal flank: motor stop.\n", getDateTime().c_str());
+          }
+        }
+        if (end_switch_delta < 0) {
+          Serial.printf("%s NEGATIVE signal flank: photoresistor_edge_delta < end_switch_delta, %d < %d\n", getDateTime().c_str(), mc->photoresistor_edge_delta, end_switch_delta);
+          if (queryEndSwitch == QueryEndSwitch::NEGATIVE) {
+            stepper->stop();
+            force_motor_stop = true;
+            Serial.printf("%s NEGATIVE signal flank: motor stop.\n", getDateTime().c_str());
+          }
+        }      
+      }
+      ticks = xTaskGetTickCount();
     }
 
     stepper->run();
