@@ -52,7 +52,7 @@ String getDateTime() {
 
 // Read File from SPIFFS
 String readFile(fs::FS &fs, const char * path) {
-  Serial.printf("Reading file: %s\r\n", path);
+  Serial.printf("%s Reading file: %s\n", getDateTime().c_str(), path);
 
   File file = fs.open(path);
   if(!file || file.isDirectory()){
@@ -72,7 +72,7 @@ String readFile(fs::FS &fs, const char * path) {
 
 // Write file to SPIFFS
 void writeFile(fs::FS &fs, const char * path, const char * message) {
-  Serial.printf("Writing file: %s\r\n", path);
+  Serial.printf("%s Writing file: %s\n", getDateTime().c_str(), path);
 
   File file = fs.open(path, FILE_WRITE);
   if(!file){
@@ -96,7 +96,7 @@ void resetDefaultConfigs() {
 
 void readHiveConfigFile() {
   String config = readFile(SPIFFS, HIVE_CONFIG_FILE);
-  Serial.printf("%s %s\n", getDateTime().c_str(), config);
+  Serial.printf("%s %s\n", getDateTime().c_str(), config.c_str());
   JsonDocument cfg_json;
   DeserializationError error = deserializeJson(cfg_json, config.c_str());
   if (error) {
@@ -146,7 +146,7 @@ void writeHiveConfigFile() {
 
 void readWifiConfigFile() {
   String config = readFile(SPIFFS, WIFI_CONFIG_FILE);
-  Serial.printf("%s %s\n", getDateTime().c_str(), config);
+  Serial.printf("%s %s\n", getDateTime().c_str(), config.c_str());
   JsonDocument cfg_json;
   DeserializationError error = deserializeJson(cfg_json, config.c_str());
   if (error) {
