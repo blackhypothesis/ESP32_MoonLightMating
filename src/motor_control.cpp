@@ -26,7 +26,9 @@ void scheduleMotorCommands(void *pvParameters) {
       } else {
         steps = STEPS_ONE_TURN;
         command = MotorCommand::DOOR_OPEN;
-        queueMotorControl(command, steps);
+        for (int motor_nr = 0; motor_nr < MAX_MOTOR; motor_nr++) {
+          queueMotorControl(motor_nr, command, steps);
+        }
       }
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
@@ -37,8 +39,9 @@ void scheduleMotorCommands(void *pvParameters) {
       } else {
         steps = STEPS_ONE_TURN;
         command = MotorCommand::DOOR_CLOSE;
-        queueMotorControl(command, steps);
-      }
+        for (int motor_nr = 0; motor_nr < MAX_MOTOR; motor_nr++) {
+          queueMotorControl(motor_nr, command, steps);
+        }      }
       vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
 
@@ -162,15 +165,16 @@ void controlStepperMotor(void *pvParameters) {
   }
 }
 
-void queueMotorControl(const MotorCommand command, const int steps) {
-  for (int i = 0; i < MAX_MOTOR; i++) {
-    motor_ctrl[i] = {steps, command};
+void queueMotorControl(const int motor_nr, const MotorCommand command, const int steps) {
+  if (motor_nr < 0 || motor_nr >= MAX_MOTOR) {
+    Serial.printf("%s ERROR: Motor Number not within range.", getDateTime().c_str());
+    return;
   }
 
-  for (int i = 0; i < MAX_MOTOR; i++) {
-    if (xQueueSend(motor_cmd_queue[i], (void *) &motor_ctrl[i], 1000) != pdTRUE) {
-      Serial.printf("%s Queue %d full.\n", getDateTime().c_str(), i);
-    }
+  motor_ctrl[motor_nr] = {steps, command};
+
+  if (xQueueSend(motor_cmd_queue[motor_nr], (void *) &motor_ctrl[motor_nr], 1000) != pdTRUE) {
+    Serial.printf("%s Queue for motor nr %d full.\n", getDateTime().c_str(), motor_nr);
   }
 }
 

@@ -61,10 +61,11 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       Serial.printf("%s Error:deserialization failed: %s\n", getDateTime().c_str(), error.f_str());
     }
     else {
+      int motor_nr = control_motor["motor"];
       int steps = control_motor["steps"];
       int command = control_motor["command"];
       Serial.printf("%s handleWebSocketMessage: steps = %d, command = %d\n", getDateTime().c_str(), steps, command);
-      queueMotorControl((MotorCommand)command, steps);
+      queueMotorControl(motor_nr, (MotorCommand)command, steps);
     }
   }
 }

@@ -234,17 +234,19 @@ void requestSecondsSinceBoot(AsyncWebServerRequest *request) {
 
 void requestMotorControl(AsyncWebServerRequest *request) {
   Serial.printf("%s request MotorControl\n", getDateTime().c_str());
-  if (request->hasParam("mcmd") && request->hasParam("steps")) {
+  if (request->hasParam("motor_nr") && request->hasParam("mcmd") && request->hasParam("steps")) {
+    int motor_nr = request->getParam("motor_nr")->value().toInt();
     int mcmd = request->getParam("mcmd")->value().toInt();
     int steps = request->getParam("steps")->value().toInt();
     JsonDocument mctl;
+    mctl["motor_nr"] = motor_nr;
     mctl["mcmd"] = mcmd;
     mctl["steps"] = steps;
     char serialized_mctl[128];
     serializeJson(mctl, serialized_mctl);
     Serial.printf("%s requestMotorControl: %s\n", getDateTime().c_str(), serialized_mctl);
     request->send(200, "application/json", String(serialized_mctl));
-    queueMotorControl((MotorCommand)mcmd, steps);
+    queueMotorControl(motor_nr, (MotorCommand)mcmd, steps);
     set_last_action_to_now();
   }
 }

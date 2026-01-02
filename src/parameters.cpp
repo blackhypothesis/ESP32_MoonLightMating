@@ -1,6 +1,6 @@
 #include "parameters.h"
 
-const String VERSION = "0.21.7";
+const String VERSION = "0.22.1";
 
 // create mutexes
 SemaphoreHandle_t run_motor_mutex = xSemaphoreCreateMutex();
@@ -52,12 +52,12 @@ const int IN3 = 18;
 const int IN4 = 17;
 
 const int IN5 = 32;
-const int IN6 = 33;
-const int IN7 = 25;
+const int IN6 = 25;
+const int IN7 = 33;
 const int IN8 = 26;
 
 // to initialize motor
-const int MAX_MOTOR = 1;
+const int MAX_MOTOR = 2;
 const int MAX_SPEED = 200;
 const int ACCELERATION = 200;
 // default values will be overwritten by values from hiveconfig.json
@@ -78,6 +78,14 @@ const int END_SWITCH3 = 35;
 motor_init_t motor_init[] = {
     {0,
       IN1, IN2, IN3, IN4,
+      MAX_SPEED, ACCELERATION,
+      DEFAULT_OFFSET_OPEN_DOOR,
+      DEFAULT_OFFSET_CLOSE_DOOR,
+      DEFAULT_PHOTORESISTOR_EDGE_DELTA,
+      DEFAULT_PHOTORESISTOR_READ_INTERVAL_MS
+    },
+    {1,
+      IN5, IN6, IN7, IN8,
       MAX_SPEED, ACCELERATION,
       DEFAULT_OFFSET_OPEN_DOOR,
       DEFAULT_OFFSET_CLOSE_DOOR,
