@@ -14,6 +14,8 @@
 #include "requests.h"
 #include "motor_control.h"
 
+extern AsyncWebServer *webserver;
+extern AsyncWebSocket *ws;
 
 void set_last_action_to_now();
 void update_clients(char *, char *);

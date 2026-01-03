@@ -87,6 +87,8 @@ extern const int DEFAULT_OFFSET_CLOSE_DOOR;
 extern const int DEFAULT_PHOTORESISTOR_EDGE_DELTA;
 extern const int DEFAULT_PHOTORESISTOR_READ_INTERVAL_MS;
 
+extern const bool ASYNC_MOTOR_RUN;
+
 
 typedef struct motor_init
 {

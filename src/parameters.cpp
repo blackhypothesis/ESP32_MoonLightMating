@@ -1,6 +1,6 @@
 #include "parameters.h"
 
-const String VERSION = "0.22.2";
+const String VERSION = "0.23.2";
 
 // create mutexes
 SemaphoreHandle_t run_motor_mutex = xSemaphoreCreateMutex();
@@ -65,6 +65,9 @@ const int DEFAULT_OFFSET_OPEN_DOOR = -50;
 const int DEFAULT_OFFSET_CLOSE_DOOR = -400;
 const int DEFAULT_PHOTORESISTOR_EDGE_DELTA = 300;
 const int DEFAULT_PHOTORESISTOR_READ_INTERVAL_MS = 400;
+
+// TODO: not jet implemented
+const bool ASYNC_MOTOR_RUN = true;
 
 const int STEPS_ONE_TURN = 4096;
 

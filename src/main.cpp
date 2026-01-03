@@ -9,6 +9,10 @@ void debug(char *task_name, char* message) {
     Serial.printf("%s\n", task_message);
 }
 
+// Create AsyncWebServer object on port 80 and WebSocket object
+AsyncWebServer *webserver = newWebServer();
+AsyncWebSocket *ws = newWebSocket();
+
 // Task: app initialize
 // ---------------------------------------------------------
 void initApp(void *pvParameters) {
@@ -111,9 +115,6 @@ void initApp(void *pvParameters) {
     Serial.printf("%s Created Task: Queen Hive Update\n", getDateTime().c_str());
   }
 
-  // Create AsyncWebServer object on port 80 and WebSocket object
-  AsyncWebServer *webserver = newWebServer();
-  AsyncWebSocket *ws = newWebSocket();
   webserver->addHandler(ws);
   webserver->begin();
 
