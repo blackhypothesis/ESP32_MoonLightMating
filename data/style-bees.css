@@ -56,6 +56,14 @@ button:hover {
     background-color: #9c400a;
 }
 
+.btn:active {
+  transform: scale(0.90);
+  transition: transform 0.05s;
+  box-shadow: 3px 2px 22px 1px rgba(0, 0, 0, 0.24);
+  background-color: #522003;
+  color: white;
+}
+
 input[type=number], select {
   width: 100%;
   padding: 2px 2px;
