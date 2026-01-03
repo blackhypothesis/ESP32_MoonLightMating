@@ -57,6 +57,15 @@ function handleNavBar() {
 }
 
 function runMotor() {
+    const rbmotor = document.querySelectorAll('input[name="motor"]');
+    let motor;
+    for (const m of rbmotor) {
+        if (m.checked) {
+            motor = m.value;
+            break;
+        }
+    }
+
     const rbs = document.querySelectorAll('input[name="command"]');
     let command;
     for (const rb of rbs) {
@@ -67,7 +76,7 @@ function runMotor() {
     }
 
     let steps = document.getElementById("steps").value;
-    let msg = '{"steps":' + steps + ',"command":' + command + '}';
+    let msg = '{"motor":' + motor + ',"steps":' + steps + ',"command":' + command + '}';
     console.log(msg);
     websocket.send(msg);
 }

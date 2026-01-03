@@ -78,6 +78,18 @@
           <table>
             <tr>
               <td>
+                <input type="radio" id="MOTOR_NR" name="motor" value="0" checked>
+                <label for="MOTOR">Motor 0</label>
+              </td>
+              <td>
+                <input type="radio" id="MOTOR_NR" name="motor" value="1">
+                <label for="MOTOR">Motor 1</label>
+              </td>
+            </tr>
+          </table>
+          <table>
+            <tr>
+              <td>
                 <input type="radio" id="MINIT" name="command" value="4" checked>
                 <label for="CW">Motor Init</label>
               </td>
@@ -121,7 +133,7 @@
         <table>
           <tr>
             <td>
-              <span>Motor 1</span>
+              <span>Motor 0</span>
             </td>
             <td>
               <span id="motor-0-state">stopped</span>
@@ -129,7 +141,7 @@
           </tr>
           <tr>
             <td>
-              <span>Motor 2</span>
+              <span>Motor 1</span>
             </td>
             <td>
               <span id="motor-1-state">stopped</span>
